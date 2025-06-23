@@ -60,6 +60,56 @@ class BeasiswaPeriodsController extends Controller
     }
 
     /**
+     * Display a listing of active beasiswa periods - public endpoint (no auth required).
+     */
+    public function getPublicPeriods(Request $request)
+    {
+        $query = BeasiswaPeriods::query();
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_periode', 'LIKE', "%{$search}%")
+                  ->orWhere('tahun', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by year
+        if ($request->has('tahun')) {
+            $query->where('tahun', $request->tahun);
+        }
+
+        // Order by latest
+        $query->orderBy('tahun', 'desc')->orderBy('created_at', 'desc');
+
+        // Pagination
+        $perPage = $request->get('per_page', 50);
+        $beasiswaPeriods = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Beasiswa periods retrieved successfully',
+            'data' => $beasiswaPeriods->items(),
+            'meta' => [
+                'current_page' => $beasiswaPeriods->currentPage(),
+                'per_page' => $beasiswaPeriods->perPage(),
+                'total' => $beasiswaPeriods->total(),
+                'last_page' => $beasiswaPeriods->lastPage(),
+            ]
+        ])->withHeaders([
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type, Accept, Authorization'
+        ]);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(StoreBeasiswaPeriodsRequest $request)

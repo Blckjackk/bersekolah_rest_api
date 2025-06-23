@@ -85,8 +85,19 @@ Route::options('/announcements/{id}', function() {
     ]);
 });
 
-/*  
-|------------------------   --------------------------------------------------
+// Public Periods Route - No authentication needed
+Route::get('/public/beasiswa-periods', [BeasiswaPeriodsController::class, 'getPublicPeriods'])->withoutMiddleware(['auth', 'auth:sanctum']);
+
+Route::options('/public/beasiswa-periods', function() {
+    return response()->json([], 200, [
+        'Access-Control-Allow-Origin' => '*',
+        'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+        'Access-Control-Allow-Headers' => 'Content-Type, Accept, Authorization'
+    ]);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Protected Routes (Authentication Required)
 |--------------------------------------------------------------------------
 */
