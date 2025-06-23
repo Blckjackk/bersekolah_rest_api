@@ -92,7 +92,13 @@ Route::options('/announcements/{id}', function() {
 */
 
 Route::middleware('auth:sanctum')->group(function () {
-    // ...existing code...
+    // User management routes for admin and superadmin
+    Route::middleware('role:superadmin')->group(function () {
+        Route::get('/users', [AuthController::class, 'getUsers']);
+        Route::post('/users', [AuthController::class, 'createUser']);
+        Route::put('/users/{id}', [AuthController::class, 'updateUser']);
+        Route::delete('/users/{id}', [AuthController::class, 'deleteUser']);
+    });
 
     /*
     |--------------------------------------------------------------------------

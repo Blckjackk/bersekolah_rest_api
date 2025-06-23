@@ -127,4 +127,107 @@ class AuthController extends Controller
             'message' => 'Logout berhasil.',
         ]);
     }
+
+    /**
+     * Get current authenticated user
+     */
+    public function me(Request $request)
+    {
+        $user = $request->user();
+        return response()->json($user);
+    }
+
+    /**
+     * Get all users (for admin/superadmin)
+     */
+    public function getUsers(Request $request)
+    {
+        // Optional: Filter by role if provided
+        $query = User::query();
+        if ($request->has('role')) {
+            $query->where('role', $request->role);
+        }
+
+        $users = $query->get();
+        return response()->json($users);
+    }
+
+    /**
+     * Create a new user (admin/superadmin only)
+     */
+    public function createUser(Request $request)
+    {
+        // Validate the request
+        $validatedData = $request->validate([
+            'name' => 'required|max:255',
+            'email' => 'required|email|unique:users',
+            'phone' => 'sometimes|numeric|unique:users',
+            'password' => 'required|confirmed',
+            'role' => 'required|in:admin,superadmin',
+        ]);
+
+        // Hash the password
+        $validatedData['password'] = Hash::make($validatedData['password']);
+        
+        // Create the user
+        $user = User::create($validatedData);
+
+        return response()->json([
+            'message' => 'User created successfully',
+            'user' => $user
+        ], 201);
+    }
+
+    /**
+     * Update a user (admin/superadmin only)
+     */
+    public function updateUser(Request $request, $id)
+    {
+        // Find the user
+        $user = User::findOrFail($id);
+
+        // Validate the request
+        $rules = [
+            'name' => 'sometimes|required|max:255',
+            'email' => 'sometimes|required|email|unique:users,email,' . $id,
+            'phone' => 'sometimes|numeric|unique:users,phone,' . $id,
+            'role' => 'sometimes|required|in:admin,superadmin',
+        ];
+
+        // Add password validation if provided
+        if ($request->filled('password')) {
+            $rules['password'] = 'required|confirmed';
+        }
+
+        $validatedData = $request->validate($rules);
+
+        // Hash the password if provided
+        if ($request->filled('password')) {
+            $validatedData['password'] = Hash::make($validatedData['password']);
+        }
+
+        // Update the user
+        $user->update($validatedData);
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user' => $user
+        ]);
+    }
+
+    /**
+     * Delete a user (admin/superadmin only)
+     */
+    public function deleteUser($id)
+    {
+        // Find the user
+        $user = User::findOrFail($id);
+        
+        // Delete the user
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully'
+        ]);
+    }
 }
