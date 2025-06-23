@@ -67,6 +67,11 @@ class BeasiswaPeriodsController extends Controller
         try {
             $validatedData = $request->validated();
 
+            // If this period is being set to active, deactivate all others
+            if (isset($validatedData['is_active']) && $validatedData['is_active']) {
+                $this->deactivateOtherPeriods();
+            }
+
             $beasiswaPeriod = BeasiswaPeriods::create($validatedData);
 
             // Load counts
@@ -124,6 +129,11 @@ class BeasiswaPeriodsController extends Controller
             $beasiswaPeriod = BeasiswaPeriods::findOrFail($id);
             
             $validatedData = $request->validated();
+            
+            // If this period is being set to active, deactivate all others
+            if (isset($validatedData['is_active']) && $validatedData['is_active'] && (!$beasiswaPeriod->is_active)) {
+                $this->deactivateOtherPeriods();
+            }
 
             // Update data
             $beasiswaPeriod->update($validatedData);
@@ -191,6 +201,67 @@ class BeasiswaPeriodsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menghapus periode beasiswa',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Deactivate all other periods to ensure only one is active at a time
+     */
+    private function deactivateOtherPeriods()
+    {
+        // Set all periods to inactive
+        BeasiswaPeriods::where('is_active', true)->update(['is_active' => false]);
+    }
+
+    /**
+     * Toggle the activation status of a period
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function toggleActive($id)
+    {
+        try {
+            $period = BeasiswaPeriods::findOrFail($id);
+            
+            // If activating this period, deactivate all others first
+            if (!$period->is_active) {
+                // Deactivate all periods
+                $this->deactivateOtherPeriods();
+                
+                // Set this one to active
+                $period->is_active = true;
+                $period->save();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Periode beasiswa berhasil diaktifkan',
+                    'data' => $period
+                ]);
+            } else {
+                // If deactivating the only active period
+                $period->is_active = false;
+                $period->save();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Periode beasiswa berhasil dinonaktifkan',
+                    'data' => $period
+                ]);
+            }
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Periode beasiswa tidak ditemukan',
+                'error' => 'Data tidak ditemukan dengan ID: ' . $id
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status periode beasiswa',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -212,6 +212,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('additional-upload', AdditionalUploadController::class);
     Route::apiResource('beasiswa-applications', BeasiswaApplicationController::class);
     Route::apiResource('beasiswa-periods', BeasiswaPeriodsController::class);
+    Route::patch('/beasiswa-periods/{id}/toggle-active', [App\Http\Controllers\BeasiswaPeriodsController::class, 'toggleActive']);
     Route::apiResource('beasiswa-recipients', BeasiswaRecipientsController::class);
     
     /*
