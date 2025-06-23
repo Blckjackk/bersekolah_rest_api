@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\AnnouncementRead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class AnnouncementController extends Controller
 {
@@ -255,6 +257,60 @@ class AnnouncementController extends Controller
             'success' => true,
             'message' => 'Announcement status updated successfully',
             'data' => $announcement
+        ]);
+    }
+
+    /**
+     * Mark an announcement as read by the current user.
+     */
+    public function markAsRead(string $id)
+    {
+        $announcement = Announcement::find($id);
+        
+        if (!$announcement) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Announcement not found'
+            ], 404);
+        }
+
+        // Create or update the read record
+        AnnouncementRead::updateOrCreate(
+            [
+                'announcement_id' => $id,
+                'user_id' => Auth::id()
+            ],
+            [
+                'read_at' => now()
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement marked as read'
+        ]);
+    }
+
+    /**
+     * Get all announcements with read status for the current user.
+     */
+    public function getAnnouncementsWithReadStatus()
+    {
+        $user = Auth::user();
+        $announcements = Announcement::published()->get();
+        
+        foreach ($announcements as $announcement) {
+            $readRecord = AnnouncementRead::where('announcement_id', $announcement->id)
+                ->where('user_id', $user->id)
+                ->first();
+                
+            $announcement->is_read = !is_null($readRecord);
+            $announcement->read_at = $readRecord ? $readRecord->read_at : null;
+        }
+        
+        return response()->json([
+            'success' => true,
+            'data' => $announcements
         ]);
     }
 }

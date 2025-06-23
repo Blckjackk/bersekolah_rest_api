@@ -20,6 +20,18 @@ return new class extends Migration
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
         });
+
+        // Create announcement_reads table for tracking reads
+        Schema::create('announcement_reads', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('announcement_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->timestamp('read_at')->useCurrent();
+            $table->timestamps();
+            
+            // Ensure a user can only have one read record per announcement
+            $table->unique(['announcement_id', 'user_id']);
+        });
     }
 
     /**
@@ -27,6 +39,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('announcement_reads');
         Schema::dropIfExists('announcements');
     }
 };

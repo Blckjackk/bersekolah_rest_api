@@ -228,6 +228,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // Announcement Management
         Route::apiResource('announcements', AnnouncementController::class);
         Route::patch('/announcements/{id}/status', [AnnouncementController::class, 'updateStatus']);
+        
+        // Announcement Read Tracking
+        Route::post('/announcements/{id}/mark-as-read', [AnnouncementController::class, 'markAsRead']);
+        Route::get('/announcements/with-read-status', [AnnouncementController::class, 'getAnnouncementsWithReadStatus']);
     });
 
     Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->group(function () {

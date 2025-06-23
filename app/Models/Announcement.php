@@ -40,4 +40,12 @@ class Announcement extends Model
                     ->where('published_at', '<=', now())
                     ->orderBy('published_at', 'desc');
     }
+    
+    /**
+     * Get the reads for the announcement.
+     */
+    public function reads()
+    {
+        return $this->hasMany(AnnouncementRead::class);
+    }
 }
