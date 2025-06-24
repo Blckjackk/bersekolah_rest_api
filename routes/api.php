@@ -28,8 +28,6 @@ use App\Http\Controllers\AnnouncementController;
 // API Health Check
 Route::get('/', function () {
     return response()->json([
-        'message' => 'Welcome to Bersekolah API',
-        'status' => 'ok',
         'version' => '1.0.0'
     ]);
 });
@@ -51,6 +49,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/dashboard/quick-actions', [DashboardController::class, 'getQuickActionStats']);
 Route::get('/applications/statistics', [DashboardController::class, 'getApplicationStats']);
 Route::get('/recent-activities', [DashboardController::class, 'getRecentActivities']);
+Route::get('/dashboard/consolidated-stats', [DashboardController::class, 'getConsolidatedStats']);
+Route::get('/documents/statistics', [BesWanDocumentController::class, 'getDocumentStatistics']);
 
 // Media Sosial
 Route::get('/media-sosial/latest', [App\Http\Controllers\MediaSosialController::class, 'getLatest']);
