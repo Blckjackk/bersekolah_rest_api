@@ -47,6 +47,10 @@ Route::get('/media-sosial/latest', [App\Http\Controllers\MediaSosialController::
 Route::post('/register', [AuthController::class, 'register']);  
 Route::post('/login', [AuthController::class, 'login']);
 
+// Password Management Routes
+Route::post('/change-password', [App\Http\Controllers\UserPasswordController::class, 'update'])->middleware('auth:sanctum');
+Route::post('/update-password', [App\Http\Controllers\UserPasswordController::class, 'update'])->middleware('auth:sanctum');
+
 // Dashboard Public Stats
 Route::get('/dashboard/quick-actions', [DashboardController::class, 'getQuickActionStats']);
 Route::get('/applications/statistics', [DashboardController::class, 'getApplicationStats']);
@@ -143,6 +147,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Authentication Routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    
+    // Password Management Routes
+    Route::post('/password/update', [App\Http\Controllers\UserPasswordController::class, 'update']);
+    Route::post('/password', [App\Http\Controllers\UserPasswordController::class, 'update']);
+    Route::post('/users/password', [App\Http\Controllers\UserPasswordController::class, 'update']);
+    Route::post('/user/password', [App\Http\Controllers\UserPasswordController::class, 'update']);
+    Route::post('/profile/password', [App\Http\Controllers\UserPasswordController::class, 'update']);
     
     // User Data Routes
     Route::post('/calon-beswan/pribadi', [App\Http\Controllers\CalonBeswanController::class, 'postPribadi']);
