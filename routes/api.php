@@ -131,6 +131,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Delete beswan
     Route::delete('/beswan/{id}', [App\Http\Controllers\BeswanController::class, 'destroy']);
 
+    Route::get('/beswan/count', [BeswanController::class, 'count']);
+
+
     // Atau bisa juga menggunakan Resource Route untuk lebih singkat
     Route::apiResource('beswan', App\Http\Controllers\BeswanController::class);
 });

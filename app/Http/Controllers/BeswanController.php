@@ -77,6 +77,47 @@ class BeswanController extends Controller
     }
 
     /**
+     * Return summary counts of beswan data
+     */
+    public function count(Request $request)
+    {
+        try {
+            $query = Beswan::query();
+
+            // Filter by period_id jika ada
+            if ($request->has('period_id') && $request->period_id) {
+                $periodId = $request->period_id;
+                $query->whereHas('beasiswaApplications', function ($q) use ($periodId) {
+                    $q->where('beasiswa_period_id', $periodId);
+                });
+            }
+
+            $total = $query->count();
+
+            $totalDokumen = Beswan::withCount('documents')->get()->sum('documents_count');
+
+            $totalDiterima = Beswan::whereHas('beasiswaApplications', function ($q) {
+                $q->where('status', 'accepted');
+            })->count();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'total_beswan' => $total,
+                    'total_documents' => $totalDokumen,
+                    'total_diterima' => $totalDiterima,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    /**
      * Update the specified beswan
      */
     public function update(Request $request, $id)
