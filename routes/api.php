@@ -18,6 +18,7 @@ use App\Http\Controllers\BeasiswaRecipientsController;
 use App\Http\Controllers\BeasiswaApplicationController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\BeasiswaCountdownController;
 
 /*
 |--------------------------------------------------------------------------
@@ -283,6 +284,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents/edit-status', [App\Http\Controllers\BesWanDocumentController::class, 'getEditStatus']);
 });
+
+// Ini buat Countdown Timer 
+Route::get('/countdown/pendaftaran', [BeasiswaCountdownController::class, 'countdown']);
 
 // Mentor CRUD & total
 Route::get('/mentors', [MentorController::class, 'index']);

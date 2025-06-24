@@ -25,8 +25,8 @@ class DashboardController extends Controller
      */    public function getQuickActionStats()
     {
         try {
-            // Get total applicants count - using CalonBeswan model for actual applicants
-            $total_pendaftar = CalonBeswan::count();
+            // Get total applicants count - using BeasiswaApplication model instead of CalonBeswan
+            $total_pendaftar = BeasiswaApplication::distinct('beswan_id')->count('beswan_id');
             
             // Get total active beswan count
             $total_beswan = BeasiswaRecipients::count();
@@ -35,7 +35,7 @@ class DashboardController extends Controller
             $total_mentor = Mentor::count();
             
             // Get total document uploads count
-            $total_dokumen = BerkasCalonBeswan::count();
+            $total_dokumen = BeswanDocument::count();
             
             return response()->json([
                 'total_pendaftar' => $total_pendaftar,
@@ -121,15 +121,17 @@ class DashboardController extends Controller
             $lolos_berkas = BeasiswaApplication::where('status', BeasiswaApplication::STATUS_LOLOS_BERKAS)->count();
             $lolos_wawancara = BeasiswaApplication::where('status', BeasiswaApplication::STATUS_LOLOS_WAWANCARA)->count();
             
-            // Get applications by period
-            $by_period = BeasiswaApplication::select('beasiswa_periods_id', DB::raw('COUNT(*) as count'))
-                ->groupBy('beasiswa_periods_id')
-                ->with('period:id,name')
+            // Get applications by period - use the correct field name
+            $by_period = BeasiswaApplication::select('beasiswa_period_id', DB::raw('COUNT(*) as count'))
+                ->groupBy('beasiswa_period_id')
+                ->with('beasiswaPeriod:id,nama_periode,tahun')
                 ->get()
                 ->map(function ($item) {
                     return [
-                        'period_id' => $item->beasiswa_periods_id,
-                        'period_name' => $item->period ? $item->period->name : 'Unknown Period',
+                        'period_id' => $item->beasiswa_period_id,
+                        'period_name' => $item->beasiswaPeriod ? 
+                            $item->beasiswaPeriod->nama_periode . ' ' . $item->beasiswaPeriod->tahun : 
+                            'Unknown Period',
                         'count' => $item->count
                     ];
                 });
@@ -243,8 +245,8 @@ class DashboardController extends Controller
      */
     private function getQuickStatsInternal()
     {
-        // Get total applicants count - using CalonBeswan model for actual applicants
-        $total_pendaftar = CalonBeswan::count();
+        // Get total applicants count - using BeasiswaApplication instead of CalonBeswan
+        $total_pendaftar = BeasiswaApplication::distinct('beswan_id')->count('beswan_id');
         
         // Get total active beswan count
         $total_beswan = BeasiswaRecipients::count();
@@ -253,10 +255,10 @@ class DashboardController extends Controller
         $total_mentor = Mentor::count();
         
         // Get total document uploads count
-        $total_dokumen = BerkasCalonBeswan::count();
+        $total_dokumen = BeswanDocument::count();
         
         // Get verified documents count
-        $dokumen_terverifikasi = BerkasCalonBeswan::where('status', 'verified')->count();
+        $dokumen_terverifikasi = BeswanDocument::where('status', 'verified')->count();
         
         return [
             'total_pendaftar' => $total_pendaftar,
