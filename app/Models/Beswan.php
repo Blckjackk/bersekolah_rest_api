@@ -13,6 +13,7 @@ class Beswan extends Model
 
     protected $fillable = [
         'user_id',
+        'nama_lengkap',
         'nama_panggilan',
         'tempat_lahir',
         'tanggal_lahir',
@@ -82,6 +83,20 @@ class Beswan extends Model
     public function latestBeasiswaApplication()
     {
         return $this->hasOne(BeasiswaApplication::class)->latest();
+    }
+
+    // Get nama_lengkap with fallback to user name
+    public function getNamaLengkapAttribute($value)
+    {
+        if ($value) {
+            return $value;
+        }
+        
+        if ($this->user && $this->user->name) {
+            return $this->user->name;
+        }
+        
+        return $this->nama_panggilan ?? '-';
     }
 
     // Check if beswan has verified documents

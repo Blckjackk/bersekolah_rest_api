@@ -31,17 +31,17 @@ class BeswanController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Beswan::with(['keluarga', 'sekolah', 'alamat', 'user']);
-            
-            // Filter by period if period_id is provided
-            if ($request->has('period_id') && $request->period_id) {
-                $periodId = $request->period_id;
-                $query->whereHas('beasiswaApplications', function($q) use ($periodId) {
-                    $q->where('beasiswa_period_id', $periodId);
-                });
-            }
-            
-            $beswans = $query->get();
+            // Simple query joining beswan with users
+            $beswans = Beswan::join('users', 'beswan.user_id', '=', 'users.id')
+                ->select(
+                    'beswan.id',
+                    'users.name as nama',
+                    'users.email',
+                    'users.phone',
+                    'beswan.created_at'
+                )
+                ->orderBy('beswan.created_at', 'desc')
+                ->get();
             
             return response()->json([
                 'status' => 'success',

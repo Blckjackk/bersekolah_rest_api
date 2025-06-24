@@ -82,6 +82,7 @@ class DatabaseSeeder extends Seeder
             MentorSeeder::class,
             AnnouncementSeeder::class,
             MediaSosialSeeder::class,
+            BeswanSeeder::class,  // Add this line
         ]);
     }
 }
