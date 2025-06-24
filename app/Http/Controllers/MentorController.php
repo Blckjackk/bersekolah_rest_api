@@ -24,15 +24,21 @@ class MentorController extends Controller
         ]);
     }
 
-    // Store new mentor
     public function store(Request $request)
     {
         $data = $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:mentors,email',
-            'photo' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // max 2MB
         ]);
+
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('mentors', 'public');
+            $data['photo'] = $photoPath;
+        }
+
         $mentor = Mentor::create($data);
+
         return response()->json($mentor, 201);
     }
 
@@ -47,14 +53,23 @@ class MentorController extends Controller
     public function update(Request $request, $id)
     {
         $mentor = Mentor::findOrFail($id);
+
         $data = $request->validate([
             'name' => 'sometimes|string',
             'email' => 'sometimes|email|unique:mentors,email,' . $id,
-            'photo' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // 10MB = 10240 KB
         ]);
+
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('mentors', 'public');
+            $data['photo'] = $photoPath;
+        }
+
         $mentor->update($data);
+
         return response()->json($mentor);
     }
+
 
     // Delete mentor
     public function destroy($id)
