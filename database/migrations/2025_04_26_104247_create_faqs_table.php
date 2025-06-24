@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('pertanyaan');
             $table->text('jawaban');
-            $table->enum('status', ['draft', 'published'])->default('draft');
+            $table->enum('status', ['draft', 'published', 'archive'])->default('draft');
             $table->timestamps();
         });
     }
