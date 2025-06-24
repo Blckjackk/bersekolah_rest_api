@@ -19,6 +19,7 @@ use App\Http\Controllers\BeasiswaApplicationController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\BeasiswaCountdownController;
+use App\Http\Controllers\ContactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -301,6 +302,12 @@ Route::prefix('dashboard')->group(function() {
     Route::get('/quick-actions', [DashboardController::class, 'getQuickActionStats']);
     Route::get('/recent-activities', [DashboardController::class, 'getRecentActivities']);
 });
+
+// Ngirim pesan ke Email
+Route::get('/form-kontak', [ContactController::class, 'showForm']);
+Route::post('/form-kontak', [ContactController::class, 'sendEmail'])->name('form.send');
+Route::post('/kirim-pesan', [ContactController::class, 'kirimPesan']);
+
 
 // Public routes
 Route::get('/user', function (Request $request) {
