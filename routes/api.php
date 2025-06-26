@@ -21,6 +21,8 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ExportDataController;
 use App\Http\Controllers\BeasiswaCountdownController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ExportController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -323,6 +325,8 @@ Route::get('/form-kontak', [ContactController::class, 'showForm']);
 Route::post('/form-kontak', [ContactController::class, 'sendEmail'])->name('form.send');
 Route::post('/kirim-pesan', [ContactController::class, 'kirimPesan']);
 
+// Untuk kebutuhan export data
+Route::get('/export', [ExportDataController::class, 'export']);
 
 // Public routes
 Route::get('/user', function (Request $request) {
@@ -444,27 +448,27 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/dashboard/recent-activities', [DashboardController::class, 'getRecentActivities']);
 });
 
-// Diagnostic endpoint
-Route::get('/debug/cors-test', function() {
-    return response()->json([
-        'success' => true,
-        'message' => 'CORS test endpoint working',
-        'timestamp' => now()->toDateTimeString(),
-        'server_info' => [
-            'php_version' => phpversion(),
-            'laravel_version' => app()->version(),
-            'environment' => app()->environment(),
-        ],
-        'headers' => collect(request()->headers->all())
-            ->map(fn($header) => is_array($header) ? implode(', ', $header) : $header)
-            ->toArray(),
-    ])->withHeaders([
-        'Access-Control-Allow-Origin' => '*',
-        'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-        'Access-Control-Allow-Headers' => 'Content-Type, Accept, Authorization',
-        'X-Debug-Cors' => 'enabled'
-    ]);
-});
+// // Diagnostic endpoint
+// Route::get('/debug/cors-test', function() {
+//     return response()->json([
+//         'success' => true,
+//         'message' => 'CORS test endpoint working',
+//         'timestamp' => now()->toDateTimeString(),
+//         'server_info' => [
+//             'php_version' => phpversion(),
+//             'laravel_version' => app()->version(),
+//             'environment' => app()->environment(),
+//         ],
+//         'headers' => collect(request()->headers->all())
+//             ->map(fn($header) => is_array($header) ? implode(', ', $header) : $header)
+//             ->toArray(),
+//     ])->withHeaders([
+//         'Access-Control-Allow-Origin' => '*',
+//         'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+//         'Access-Control-Allow-Headers' => 'Content-Type, Accept, Authorization',
+//         'X-Debug-Cors' => 'enabled'
+//     ]);
+// });
 
 Route::options('/debug/cors-test', function() {
     return response()->json([], 200, [

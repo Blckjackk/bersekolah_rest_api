@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
@@ -27,11 +27,18 @@ class ExportDataController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
-     */
-    public function export(Request $request)
+     */    public function export(Request $request)
     {
+        // Get tables as comma-separated string and convert to array
+        $tablesString = $request->query('tables');
+        $tables = $tablesString ? explode(',', $tablesString) : [];
+        
         // Validate request
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make([
+            'tables' => $tables,
+            'format' => $request->query('format'),
+            'dateRange' => $request->query('dateRange', 'all'),
+        ], [
             'tables' => 'required|array',
             'format' => 'required|string|in:csv,excel,json',
             'dateRange' => 'nullable|string|in:all,today,this_week,this_month,this_year',
@@ -45,13 +52,11 @@ class ExportDataController extends Controller
         $user = Auth::user();
         if (!$user || !in_array($user->role, ['admin', 'superadmin'])) {
             return response()->json(['message' => 'Unauthorized: Anda tidak memiliki akses untuk mengekspor data'], 403);
-        }
-
-        try {
+        }        try {
             // Get selected tables
-            $tables = $request->tables;
-            $format = $request->format;
-            $dateRange = $request->dateRange ?? 'all';
+            $tables = $tables;
+            $format = $request->query('format');
+            $dateRange = $request->query('dateRange', 'all');
 
             // Collect data from selected tables
             $exportData = $this->collectData($tables, $dateRange);
