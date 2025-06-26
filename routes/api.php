@@ -18,6 +18,7 @@ use App\Http\Controllers\BeasiswaRecipientsController;
 use App\Http\Controllers\BeasiswaApplicationController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ExportDataController;
 use App\Http\Controllers\BeasiswaCountdownController;
 use App\Http\Controllers\ContactController;
 
@@ -389,7 +390,9 @@ Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->prefix('admin')->g
     Route::apiResource('testimonials', App\Http\Controllers\TestimoniController::class);
     Route::apiResource('media-sosial', App\Http\Controllers\MediaSosialController::class);
     
-    // User management
+    // Export data functionality
+    Route::post('/export-data', [ExportDataController::class, 'export']);
+    
     // Route::get('/users', [App\Http\Controllers\AdminController::class, 'getUsers']);
     // Route::get('/users/{id}', [App\Http\Controllers\AdminController::class, 'getUserDetail']);
     // Route::put('/users/{id}/role', [App\Http\Controllers\AdminController::class, 'updateUserRole']);
@@ -428,6 +431,10 @@ Route::get('/faqs', [FaqController::class, 'index']); // Get published FAQs
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::apiResource('faqs', FaqController::class); // Full CRUD for admin
 });
+
+// Export Data route for admin/superadmin
+Route::post('/export-data', [ExportDataController::class, 'export'])
+    ->middleware(['auth:sanctum', 'role:admin,superadmin']);
 
 // Dashboard routes
 Route::middleware(['auth:sanctum'])->group(function () {
