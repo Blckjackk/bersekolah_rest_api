@@ -324,6 +324,15 @@ Route::put('/artikels/{id}', [ArtikelController::class, 'update']);
 Route::delete('/artikels/{id}', [ArtikelController::class, 'destroy']);
 Route::put('/artikels/{id}/status', [ArtikelController::class, 'updateStatus']);
 
+// Testimoni CRUD & total
+Route::get('/testimonis', [TestimoniController::class, 'index']);
+Route::get('/testimonis/total', [TestimoniController::class, 'total']);
+Route::post('/testimonis', [TestimoniController::class, 'store']);
+Route::get('/testimonis/{id}', [TestimoniController::class, 'show']);
+Route::put('/testimonis/{id}', [TestimoniController::class, 'update']);
+Route::delete('/testimonis/{id}', [TestimoniController::class, 'destroy']);
+Route::put('/testimonis/{id}/status', [TestimoniController::class, 'updateStatus']);
+
 // Dashboard Routes
 Route::prefix('dashboard')->group(function() {
     Route::get('/quick-actions', [DashboardController::class, 'getQuickActionStats']);
