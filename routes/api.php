@@ -17,6 +17,7 @@ use App\Http\Controllers\BerkasCalonBeswanController;
 use App\Http\Controllers\BeasiswaRecipientsController;
 use App\Http\Controllers\BeasiswaApplicationController;
 use App\Http\Controllers\MentorController;
+use App\Http\Controllers\ArtikelController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ExportDataController;
 use App\Http\Controllers\BeasiswaCountdownController;
@@ -313,6 +314,15 @@ Route::post('/mentors', [MentorController::class, 'store']);
 Route::get('/mentors/{id}', [MentorController::class, 'show']);
 Route::put('/mentors/{id}', [MentorController::class, 'update']);
 Route::delete('/mentors/{id}', [MentorController::class, 'destroy']);
+
+// Artikel CRUD & total
+Route::get('/artikels', [ArtikelController::class, 'index']);
+Route::get('/artikels/total', [ArtikelController::class, 'total']);
+Route::post('/artikels', [ArtikelController::class, 'store']);
+Route::get('/artikels/{id}', [ArtikelController::class, 'show']);
+Route::put('/artikels/{id}', [ArtikelController::class, 'update']);
+Route::delete('/artikels/{id}', [ArtikelController::class, 'destroy']);
+Route::put('/artikels/{id}/status', [ArtikelController::class, 'updateStatus']);
 
 // Dashboard Routes
 Route::prefix('dashboard')->group(function() {
