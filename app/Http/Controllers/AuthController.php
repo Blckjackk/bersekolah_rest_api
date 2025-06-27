@@ -12,13 +12,14 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
         // Debug: Log request data
-        \Log::info('Register request data:', $request->all());
+        Log::info('Register request data:', $request->all());
         
         try {
             $validatedData = $request->validate([
@@ -29,7 +30,7 @@ class AuthController extends Controller
             ]);
 
             // Debug: Log validated data
-            \Log::info('Validated data:', $validatedData);
+            Log::info('Validated data:', $validatedData);
 
             // Gunakan database transaction untuk memastikan konsistensi data
             DB::beginTransaction();
@@ -47,13 +48,28 @@ class AuthController extends Controller
                 // Simpan beswan_id untuk digunakan ke tabel lain
                 $beswanId = $beswan->id;
                 
-                // Buat token untuk user
-                $token = $user->createToken($request->email)->plainTextToken;
+                // Buat token untuk user secara manual
+                $plainTextToken = bin2hex(random_bytes(20));
+                
+                $tokenId = DB::table('personal_access_tokens')->insertGetId([
+                    'tokenable_type' => get_class($user),
+                    'tokenable_id' => $user->id,
+                    'name' => $request->email,
+                    'token' => hash('sha256', $plainTextToken),
+                    'abilities' => json_encode(['*']),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                $token = $tokenId . '|' . $plainTextToken;
 
                 DB::commit();
 
-                // Load relasi beswan untuk response
-                $user->load('beswan');
+                // Load relasi beswan untuk response secara manual
+                $beswan = DB::table('beswan')->where('user_id', $user->id)->first();
+                if ($beswan) {
+                    $user->beswan_data = $beswan;
+                }
 
                 return response()->json([
                     'message' => 'Registrasi berhasil.',
@@ -64,7 +80,7 @@ class AuthController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollback();
-                \Log::error('Database transaction failed:', ['error' => $e->getMessage()]);
+                Log::error('Database transaction failed:', ['error' => $e->getMessage()]);
                 return response()->json([
                     'message' => 'Terjadi kesalahan saat menyimpan data.',
                     'errors' => ['server' => [$e->getMessage()]]
@@ -72,13 +88,13 @@ class AuthController extends Controller
             }
             
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation failed:', $e->errors());
+            Log::error('Validation failed:', $e->errors());
             return response()->json([
                 'message' => 'Data yang diberikan tidak valid',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Registration error:', ['error' => $e->getMessage()]);
+            Log::error('Registration error:', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Terjadi kesalahan server',
                 'errors' => ['server' => ['Gagal membuat akun']]
@@ -88,40 +104,78 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        try {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
 
-        if (!Auth::attempt($credentials)) {
+            if (!Auth::attempt($credentials)) {
+                return response()->json([
+                    'message' => 'Email atau kata sandi salah.',
+                ], 401);
+            }
+
+            $user = Auth::user();
+            
+            // Hapus token yang sudah ada secara manual
+            DB::table('personal_access_tokens')
+                ->where('tokenable_type', get_class($user))
+                ->where('tokenable_id', $user->id)
+                ->delete();
+            
+            // Buat token baru secara manual
+            $plainTextToken = bin2hex(random_bytes(20));
+            
+            $tokenId = DB::table('personal_access_tokens')->insertGetId([
+                'tokenable_type' => get_class($user),
+                'tokenable_id' => $user->id,
+                'name' => 'auth_token',
+                'token' => hash('sha256', $plainTextToken),
+                'abilities' => json_encode([$user->role ?? 'user']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            $token = $tokenId . '|' . $plainTextToken;
+            
+            // Load relasi beswan secara manual
+            $beswan = DB::table('beswan')->where('user_id', $user->id)->first();
+            if ($beswan) {
+                $user->beswan_data = $beswan;
+            }
+            
             return response()->json([
-                'message' => 'Email atau kata sandi salah.',
-            ], 401);
+                'message' => 'Login berhasil.',
+                'user' => $user,
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ], 200);
+            
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat login.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $user = Auth::user();
-        
-        // Hapus token yang sudah ada (opsional)
-        $user->tokens()->delete();
-        
-        // Buat token baru dengan nama aplikasi dan role sebagai ability
-        $token = $user->createToken('auth_token', [$user->role])->plainTextToken;
-        
-        // Load relasi beswan
-        $user->load('beswan');
-        
-        return response()->json([
-            'message' => 'Login berhasil.',
-            'user' => $user,
-            'token' => $token,
-            'token_type' => 'Bearer',
-        ], 200);
     }
 
     public function logout(Request $request)
     {
         $user = $request->user();
-        $user->currentAccessToken()->delete();
+        if ($user) {
+            // Hapus token saat ini secara manual
+            $accessToken = $request->bearerToken();
+            if ($accessToken) {
+                $tokenId = explode('|', $accessToken)[0] ?? null;
+                if ($tokenId) {
+                    DB::table('personal_access_tokens')
+                        ->where('id', $tokenId)
+                        ->delete();
+                }
+            }
+        }
 
         return response()->json([
             'message' => 'Logout berhasil.',
@@ -133,8 +187,23 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        $user = $request->user();
-        return response()->json($user);
+        try {
+            $user = $request->user();
+            if ($user) {
+                // Load relasi beswan secara manual
+                $beswan = DB::table('beswan')->where('user_id', $user->id)->first();
+                if ($beswan) {
+                    $user->beswan_data = $beswan;
+                }
+            }
+            return response()->json($user);
+        } catch (\Exception $e) {
+            Log::error('Error in me(): ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat mengambil data user.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
