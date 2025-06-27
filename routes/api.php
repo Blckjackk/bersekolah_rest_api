@@ -392,6 +392,10 @@ Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->prefix('admin')->g
     Route::apiResource('settings', App\Http\Controllers\SettingController::class);
     Route::apiResource('faqs', App\Http\Controllers\FAQController::class);  
     Route::apiResource('testimonials', App\Http\Controllers\TestimoniController::class);
+    
+    // Additional testimonial routes
+    Route::patch('testimonials/{testimoni}/status', [App\Http\Controllers\TestimoniController::class, 'updateStatus']);
+    
     Route::apiResource('media-sosial', App\Http\Controllers\MediaSosialController::class);
     
     // Export data functionality

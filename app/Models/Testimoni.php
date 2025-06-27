@@ -19,4 +19,17 @@ class Testimoni extends Model
         'status',
         'tanggal_input',
     ];
+
+    protected $casts = [
+        'tanggal_input' => 'datetime',
+    ];
+
+    // Accessor untuk foto testimoni agar bisa menampilkan URL lengkap
+    public function getFotoTestimoniUrlAttribute()
+    {
+        if ($this->foto_testimoni) {
+            return asset('storage/' . $this->foto_testimoni);
+        }
+        return null;
+    }
 }

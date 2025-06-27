@@ -21,7 +21,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 
 class ExportDataController extends Controller
-{    /**
+{
+    /**
      * Handle the export data request.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -52,14 +53,18 @@ class ExportDataController extends Controller
         $user = Auth::user();
         if (!$user || !in_array($user->role, ['admin', 'superadmin'])) {
             return response()->json(['message' => 'Unauthorized: Anda tidak memiliki akses untuk mengekspor data'], 403);
-        }        try {
+        }
+        
+        try {
             // Get selected tables
             $tables = $tables;
             $format = $request->query('format');
             $dateRange = $request->query('dateRange', 'all');
 
             // Collect data from selected tables
-            $exportData = $this->collectData($tables, $dateRange);            // Generate export file based on format
+            $exportData = $this->collectData($tables, $dateRange);
+            
+            // Generate export file based on format
             switch ($format) {
                 case 'excel':
                     // Ensure Excel format is handled correctly
@@ -75,7 +80,9 @@ class ExportDataController extends Controller
             Log::error('Export data error: ' . $e->getMessage());
             return response()->json(['message' => 'Gagal mengekspor data: ' . $e->getMessage()], 500);
         }
-    }    /**
+    }
+
+    /**
      * Collect data from selected tables based on date range
      *
      * @param array $tables
@@ -96,8 +103,10 @@ class ExportDataController extends Controller
                             if ($dateRange !== 'all') {
                                 $query->whereBetween('created_at', [$dateFilter['start'], $dateFilter['end']]);
                             }
-                            // Ambil semua kolom untuk memastikan data lengkap
-                            $exportData[$table] = $query->get();
+                            // Tambahkan lebih banyak kolom yang relevan
+                            $exportData[$table] = $query->select(
+                                'id', 'name', 'email', 'role', 'status', 'email_verified_at', 'created_at', 'updated_at'
+                            )->get();
                             break;
 
                         case 'calon_beswans':
@@ -274,7 +283,8 @@ class ExportDataController extends Controller
      * @param array $data
      * @param array $tables
      * @return \Illuminate\Http\Response
-     */    private function exportToExcel(array $data, array $tables)
+     */
+    private function exportToExcel(array $data, array $tables)
     {
         // Create a new Spreadsheet
         $spreadsheet = new Spreadsheet();
@@ -381,7 +391,8 @@ class ExportDataController extends Controller
      * @param array $data
      * @param array $tables
      * @return \Illuminate\Http\Response
-     */    private function exportToCsv(array $data, array $tables)
+     */
+    private function exportToCsv(array $data, array $tables)
     {
         // Since CSV can only have one sheet, we'll combine all selected tables
         $spreadsheet = new Spreadsheet();
@@ -486,6 +497,7 @@ class ExportDataController extends Controller
             'Expires' => '0'
         ])->deleteFileAfterSend(true);
     }
+    
     /**
      * Export data to JSON format
      *
