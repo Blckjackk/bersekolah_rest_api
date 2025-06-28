@@ -46,41 +46,6 @@ class TestimoniController extends Controller
     }
 
     /**
-     * Get total count of testimonials
-     */
-    public function total(Request $request)
-    {
-        try {
-            $user = Auth::user();
-            
-            if ($user && in_array($user->role, ['admin', 'superadmin'])) {
-                $total = Testimoni::count();
-                $active = Testimoni::where('status', 'active')->count();
-                $inactive = Testimoni::where('status', 'inactive')->count();
-            } else {
-                $total = Testimoni::where('status', 'active')->count();
-                $active = $total;
-                $inactive = 0;
-            }
-            
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'total' => $total,
-                    'active' => $active,
-                    'inactive' => $inactive
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error getting testimoni count: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get testimoni count'
-            ], 500);
-        }
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -96,25 +61,8 @@ class TestimoniController extends Controller
             ]);
 
             if ($request->hasFile('foto_testimoni')) {
-                // Get the uploaded file
-                $file = $request->file('foto_testimoni');
-                
-                // Generate unique filename
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                
-                // Define the path to save in frontend assets
-                $frontendPath = base_path('../bersekolah_website/public/assets/image/testimoni/');
-                
-                // Create directory if it doesn't exist
-                if (!file_exists($frontendPath)) {
-                    mkdir($frontendPath, 0755, true);
-                }
-                
-                // Move file to frontend directory
-                $file->move($frontendPath, $filename);
-                
-                // Only save filename to database
-                $validatedData['foto_testimoni'] = $filename;
+                $path = $request->file('foto_testimoni')->store('testimoni', 'public');
+                $validatedData['foto_testimoni'] = $path;
             }
 
             $validatedData['status'] = $validatedData['status'] ?? 'inactive';
@@ -169,33 +117,13 @@ class TestimoniController extends Controller
             ]);
 
             if ($request->hasFile('foto_testimoni')) {
-                // Delete old image if exists
-                if ($testimoni->foto_testimoni && $testimoni->foto_testimoni !== 'default.jpg') {
-                    $oldImagePath = base_path('../bersekolah_website/public/assets/image/testimoni/' . $testimoni->foto_testimoni);
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
-                    }
+                // Hapus foto lama jika ada
+                if ($testimoni->foto_testimoni) {
+                    Storage::disk('public')->delete($testimoni->foto_testimoni);
                 }
 
-                // Get the uploaded file
-                $file = $request->file('foto_testimoni');
-                
-                // Generate unique filename
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                
-                // Define the path to save in frontend assets
-                $frontendPath = base_path('../bersekolah_website/public/assets/image/testimoni/');
-                
-                // Create directory if it doesn't exist
-                if (!file_exists($frontendPath)) {
-                    mkdir($frontendPath, 0755, true);
-                }
-                
-                // Move file to frontend directory
-                $file->move($frontendPath, $filename);
-                
-                // Only save filename to database
-                $validatedData['foto_testimoni'] = $filename;
+                $path = $request->file('foto_testimoni')->store('testimoni', 'public');
+                $validatedData['foto_testimoni'] = $path;
             }
 
             $testimoni->update($validatedData);
@@ -226,12 +154,8 @@ class TestimoniController extends Controller
     public function destroy(Testimoni $testimoni)
     {
         try {
-            // Delete image file if exists
-            if ($testimoni->foto_testimoni && $testimoni->foto_testimoni !== 'default.jpg') {
-                $imagePath = base_path('../bersekolah_website/public/assets/image/testimoni/' . $testimoni->foto_testimoni);
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
+            if ($testimoni->foto_testimoni) {
+                Storage::disk('public')->delete($testimoni->foto_testimoni);
             }
 
             $testimoni->delete();
