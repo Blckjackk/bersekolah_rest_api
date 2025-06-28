@@ -422,9 +422,9 @@ export default function AdminDokumenWajibPage() {
           <CardTitle className="text-lg">Filter & Pencarian</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div>
-              <Label htmlFor="search">Cari Pendaftar/File</Label>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+            <div className="space-y-2">
+              <Label htmlFor="search" className="text-sm font-medium text-gray-700">Cari Pendaftar/File</Label>
               <div className="relative">
                 <Search className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
                 <Input
@@ -437,8 +437,8 @@ export default function AdminDokumenWajibPage() {
               </div>
             </div>
             
-            <div>
-              <Label htmlFor="status">Status</Label>
+            <div className="space-y-2">
+              <Label htmlFor="status" className="text-sm font-medium text-gray-700">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Semua Status" />
@@ -452,8 +452,8 @@ export default function AdminDokumenWajibPage() {
               </Select>
             </div>
             
-            <div>
-              <Label htmlFor="type">Jenis Dokumen</Label>
+            <div className="space-y-2">
+              <Label htmlFor="type" className="text-sm font-medium text-gray-700">Jenis Dokumen</Label>
               <Select value={documentTypeFilter} onValueChange={setDocumentTypeFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Semua Jenis" />
