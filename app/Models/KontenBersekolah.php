@@ -25,4 +25,13 @@ class KontenBersekolah extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Accessor untuk gambar artikel agar bisa menampilkan URL lengkap
+    public function getGambarUrlAttribute()
+    {
+        if ($this->gambar) {
+            return asset('storage/artikel/' . $this->gambar);
+        }
+        return asset('storage/artikel/default.jpg');
+    }
 }

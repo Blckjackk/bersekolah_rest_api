@@ -67,7 +67,7 @@ Route::get('/periods/stats', [DashboardController::class, 'getPeriodStats']);
 
 // Public Content Routes
 Route::get('/testimoni', [App\Http\Controllers\TestimoniController::class, 'index']);
-Route::post('/testimoni', [App\Http\Controllers\TestimoniController::class, 'store']);
+Route::get('/testimoni/{id}', [App\Http\Controllers\TestimoniController::class, 'show']);
 Route::get('/faq', [App\Http\Controllers\FaqController::class, 'index']);
 Route::get('/faq/{id}', [App\Http\Controllers\FaqController::class, 'show']);
 Route::get('/konten', [App\Http\Controllers\KontenBersekolahController::class, 'index']);
@@ -261,6 +261,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // Route::apiResource('admin-testimonial', App\Http\Controllers\TestimonialController::class);
         Route::apiResource('admin-faq', App\Http\Controllers\FaqController::class)->except(['index', 'show']);
         Route::apiResource('admin-konten', App\Http\Controllers\KontenBersekolahController::class);
+        Route::patch('/admin-konten/{id}/status', [App\Http\Controllers\KontenBersekolahController::class, 'updateStatus']);
+        
+        // Testimoni Management Admin
+        Route::post('/testimoni', [App\Http\Controllers\TestimoniController::class, 'store']);
+        Route::put('/testimoni/{id}', [App\Http\Controllers\TestimoniController::class, 'update']);
+        Route::delete('/testimoni/{id}', [App\Http\Controllers\TestimoniController::class, 'destroy']);
+        Route::put('/testimoni/{id}/status', [App\Http\Controllers\TestimoniController::class, 'updateStatus']);
         
         // Announcement Management
         Route::apiResource('announcements', AnnouncementController::class);
@@ -391,10 +398,6 @@ Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->prefix('admin')->g
     // Content management
     Route::apiResource('settings', App\Http\Controllers\SettingController::class);
     Route::apiResource('faqs', App\Http\Controllers\FAQController::class);  
-    Route::apiResource('testimonials', App\Http\Controllers\TestimoniController::class);
-    
-    // Additional testimonial routes
-    Route::patch('testimonials/{testimoni}/status', [App\Http\Controllers\TestimoniController::class, 'updateStatus']);
     
     Route::apiResource('media-sosial', App\Http\Controllers\MediaSosialController::class);
     

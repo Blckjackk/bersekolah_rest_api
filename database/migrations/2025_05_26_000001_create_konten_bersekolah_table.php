@@ -14,8 +14,8 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->text('deskripsi')->nullable();
             $table->string('category')->nullable();
-            $table->string('gambar');
-            $table->enum('status', ['draft', 'published'])->default('draft');
+            $table->string('gambar')->nullable();
+            $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });

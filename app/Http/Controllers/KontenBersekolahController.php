@@ -17,12 +17,10 @@ class KontenBersekolahController extends Controller
     public function index(Request $request)
     {
         $query = KontenBersekolah::query();
-        
         // For public endpoint, only show published content
         if (!$request->is('api/admin*')) {
             $query->where('status', 'published');
         }
-
         // Add search functionality
         if ($request->has('search')) {
             $search = $request->search;
@@ -32,18 +30,28 @@ class KontenBersekolahController extends Controller
                   ->orWhere('category', 'like', "%{$search}%");
             });
         }
-
         // Add category filter
         if ($request->has('category')) {
             $query->where('category', $request->category);
         }
-
-        $konten = $query->orderBy('created_at', 'desc')->get();
-
+        $perPage = $request->get('per_page', 6);
+        $konten = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $konten->getCollection()->transform(function($item) {
+            if ($item->gambar) {
+                $item->gambar = url('/assets/image/artikel/' . $item->gambar);
+            }
+            return $item;
+        });
         return response()->json([
             'success' => true,
             'message' => 'Konten berhasil diambil',
-            'data' => $konten
+            'data' => $konten->items(),
+            'meta' => [
+                'current_page' => $konten->currentPage(),
+                'last_page' => $konten->lastPage(),
+                'per_page' => $konten->perPage(),
+                'total' => $konten->total(),
+            ]
         ]);
     }
 
@@ -52,14 +60,16 @@ class KontenBersekolahController extends Controller
      */
     public function show($id)
     {
-        // Try to find by ID
         $konten = KontenBersekolah::where(function($query) use ($id) {
                 $query->where('id', $id)
                       ->orWhere('slug', $id);
             })
             ->where('status', 'published')
             ->firstOrFail();
-
+        // Tambahkan path gambar pada response (tanpa mengubah database)
+        if ($konten->gambar) {
+            $konten->gambar = url('/assets/image/artikel/' . $konten->gambar);
+        }
         return response()->json([
             'success' => true,
             'message' => 'Konten berhasil diambil',
@@ -92,20 +102,26 @@ class KontenBersekolahController extends Controller
 
         try {
             $data = $request->all();
-            
             // Handle image upload if provided
             if ($request->hasFile('gambar')) {
                 $image = $request->file('gambar');
-                $filename = time() . '_' . Str::slug($request->judul_halaman) . '.' . $image->getClientOriginalExtension();
-                $path = $image->storeAs('public/uploads/konten', $filename);
-                $data['gambar'] = Storage::url($path);
+                // Gunakan slug sebagai nama file dasar
+                $slug = Str::slug($request->slug ?? $request->judul_halaman);
+                $filename = $slug . '.' . $image->getClientOriginalExtension();
+                $destination = base_path('../bersekolah_website/public/assets/image/artikel');
+                
+                // Pastikan direktori ada
+                if (!file_exists($destination)) {
+                    mkdir($destination, 0755, true);
+                }
+                
+                $image->move($destination, $filename);
+                $data['gambar'] = $filename; // hanya nama file
+            } else {
+                unset($data['gambar']);
             }
-            
-            // Set user_id to the authenticated user
-            $data['user_id'] = Auth::id();
-            
+            $data['user_id'] = Auth::id() ?? 1;
             $konten = KontenBersekolah::create($data);
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Konten berhasil dibuat',
@@ -148,23 +164,31 @@ class KontenBersekolahController extends Controller
 
         try {
             $data = $request->all();
-            
             // Handle image upload if provided
             if ($request->hasFile('gambar')) {
-                // Delete old image if exists
-                if ($konten->gambar && Storage::exists(str_replace('/storage', 'public', $konten->gambar))) {
-                    Storage::delete(str_replace('/storage', 'public', $konten->gambar));
+                // Hapus gambar lama jika ada
+                if ($konten->gambar) {
+                    $oldPath = base_path('../bersekolah_website/public/assets/image/artikel/' . $konten->gambar);
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
+                }
+                $image = $request->file('gambar');
+                $slug = Str::slug($request->slug ?? $request->judul_halaman);
+                $filename = $slug . '.' . $image->getClientOriginalExtension();
+                $destination = base_path('../bersekolah_website/public/assets/image/artikel');
+                
+                // Pastikan direktori ada
+                if (!file_exists($destination)) {
+                    mkdir($destination, 0755, true);
                 }
                 
-                // Upload new image
-                $image = $request->file('gambar');
-                $filename = time() . '_' . Str::slug($request->judul_halaman) . '.' . $image->getClientOriginalExtension();
-                $path = $image->storeAs('public/uploads/konten', $filename);
-                $data['gambar'] = Storage::url($path);
+                $image->move($destination, $filename);
+                $data['gambar'] = $filename; // hanya nama file
+            } else {
+                unset($data['gambar']); // jangan update kolom gambar jika tidak upload baru
             }
-            
             $konten->update($data);
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Konten berhasil diperbarui',
@@ -180,20 +204,57 @@ class KontenBersekolahController extends Controller
     }
     
     /**
+     * Update the status of the specified resource.
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        // Find the konten
+        $konten = KontenBersekolah::findOrFail($id);
+        
+        // Validate the request data
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:draft,published,archived',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $konten->update(['status' => $request->status]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Status konten berhasil diperbarui',
+                'data' => $konten
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui status konten',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy($id)
     {
         try {
             $konten = KontenBersekolah::findOrFail($id);
-            
-            // Delete associated image if exists
-            if ($konten->gambar && Storage::exists(str_replace('/storage', 'public', $konten->gambar))) {
-                Storage::delete(str_replace('/storage', 'public', $konten->gambar));
+            // Delete associated image if exists (from artikel folder)
+            if ($konten->gambar) {
+                $imagePath = base_path('../bersekolah_website/public/assets/image/artikel/' . $konten->gambar);
+                if (file_exists($imagePath)) {
+                    @unlink($imagePath);
+                }
             }
-            
             $konten->delete();
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Konten berhasil dihapus'

@@ -31,6 +31,12 @@ class TestimoniController extends Controller
                     ->get();
             }
             
+            // Add foto_testimoni_url to each testimoni
+            $testimoni->transform(function($item) {
+                $item->foto_testimoni_url = $item->foto_testimoni_url;
+                return $item;
+            });
+            
             return response()->json([
                 'success' => true,
                 'data' => $testimoni,
@@ -61,14 +67,17 @@ class TestimoniController extends Controller
             ]);
 
             if ($request->hasFile('foto_testimoni')) {
-                $path = $request->file('foto_testimoni')->store('testimoni', 'public');
-                $validatedData['foto_testimoni'] = $path;
+                $file = $request->file('foto_testimoni');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('testimoni', $filename, 'public');
+                $validatedData['foto_testimoni'] = $filename;
             }
 
             $validatedData['status'] = $validatedData['status'] ?? 'inactive';
             $validatedData['tanggal_input'] = now();
 
             $testimoni = Testimoni::create($validatedData);
+            $testimoni->foto_testimoni_url = $testimoni->foto_testimoni_url;
 
             return response()->json([
                 'success' => true,
@@ -95,6 +104,7 @@ class TestimoniController extends Controller
      */
     public function show(Testimoni $testimoni)
     {
+        $testimoni->foto_testimoni_url = $testimoni->foto_testimoni_url;
         return response()->json([
             'success' => true,
             'data' => $testimoni
@@ -119,14 +129,17 @@ class TestimoniController extends Controller
             if ($request->hasFile('foto_testimoni')) {
                 // Hapus foto lama jika ada
                 if ($testimoni->foto_testimoni) {
-                    Storage::disk('public')->delete($testimoni->foto_testimoni);
+                    Storage::disk('public')->delete('testimoni/' . $testimoni->foto_testimoni);
                 }
 
-                $path = $request->file('foto_testimoni')->store('testimoni', 'public');
-                $validatedData['foto_testimoni'] = $path;
+                $file = $request->file('foto_testimoni');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('testimoni', $filename, 'public');
+                $validatedData['foto_testimoni'] = $filename;
             }
 
             $testimoni->update($validatedData);
+            $testimoni->foto_testimoni_url = $testimoni->foto_testimoni_url;
 
             return response()->json([
                 'success' => true,
@@ -155,7 +168,7 @@ class TestimoniController extends Controller
     {
         try {
             if ($testimoni->foto_testimoni) {
-                Storage::disk('public')->delete($testimoni->foto_testimoni);
+                Storage::disk('public')->delete('testimoni/' . $testimoni->foto_testimoni);
             }
 
             $testimoni->delete();
