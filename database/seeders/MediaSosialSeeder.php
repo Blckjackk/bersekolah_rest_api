@@ -19,7 +19,7 @@ class MediaSosialSeeder extends Seeder
         // Create the default media sosial entry
         MediaSosial::create([
             'twibbon_link' => 'https://twb.nz/bersekolah2025',
-            'instagram_link' => 'https://instagram.com/bersekolah.id'
+            'instagram_link' => 'https://instagram.com/ber.sekolah'
         ]);
     }
 }
