@@ -335,7 +335,7 @@ Route::post('/form-kontak', [ContactController::class, 'sendEmail'])->name('form
 Route::post('/kirim-pesan', [ContactController::class, 'kirimPesan']);
 
 // Untuk kebutuhan export data
-Route::get('/export', [ExportDataController::class, 'export']);
+Route::get('/export', [ExportDataController::class, 'export'])->middleware(['auth:sanctum', 'role:admin,superadmin']);
 
 // Public routes
 Route::get('/user', function (Request $request) {
