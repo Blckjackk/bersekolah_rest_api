@@ -114,9 +114,10 @@ class TestimoniController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Testimoni $testimoni)
+    public function update(Request $request, $id)
     {
         try {
+            $testimoni = Testimoni::findOrFail($id);
             $validatedData = $request->validate([
                 'nama' => 'sometimes|required|string|max:100',
                 'angkatan_beswan' => 'sometimes|required|string|max:20',
@@ -125,22 +126,17 @@ class TestimoniController extends Controller
                 'foto_testimoni' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
                 'status' => 'in:active,inactive'
             ]);
-
             if ($request->hasFile('foto_testimoni')) {
-                // Hapus foto lama jika ada
                 if ($testimoni->foto_testimoni) {
                     Storage::disk('public')->delete('testimoni/' . $testimoni->foto_testimoni);
                 }
-
                 $file = $request->file('foto_testimoni');
                 $filename = time() . '_' . $file->getClientOriginalName();
                 $file->storeAs('testimoni', $filename, 'public');
                 $validatedData['foto_testimoni'] = $filename;
             }
-
             $testimoni->update($validatedData);
             $testimoni->foto_testimoni_url = $testimoni->foto_testimoni_url;
-
             return response()->json([
                 'success' => true,
                 'message' => 'Testimoni updated successfully.',
@@ -164,15 +160,14 @@ class TestimoniController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Testimoni $testimoni)
+    public function destroy($id)
     {
         try {
+            $testimoni = Testimoni::findOrFail($id);
             if ($testimoni->foto_testimoni) {
                 Storage::disk('public')->delete('testimoni/' . $testimoni->foto_testimoni);
             }
-
             $testimoni->delete();
-
             return response()->json([
                 'success' => true,
                 'message' => 'Testimoni deleted successfully.'

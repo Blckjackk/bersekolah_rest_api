@@ -262,7 +262,7 @@ class ExportDataController extends Controller
                 ];
             default:
                 return [
-                    'start' => Carbon::minValue(),
+                    'start' => Carbon::createFromTimestamp(0),
                     'end' => $now,
                 ];
         }

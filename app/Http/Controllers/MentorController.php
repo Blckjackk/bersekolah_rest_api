@@ -10,8 +10,13 @@ class MentorController extends Controller
     // Get all mentors
     public function index()
     {
+        $mentors = Mentor::all();
+        $mentors->transform(function($mentor) {
+            $mentor->photo_url = $mentor->photo_url;
+            return $mentor;
+        });
         return response()->json([
-            'data' => Mentor::all(),
+            'data' => $mentors,
             'total' => Mentor::count()
         ]);
     }
@@ -29,16 +34,14 @@ class MentorController extends Controller
         $data = $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:mentors,email',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // max 2MB
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // max 10MB
         ]);
-
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('mentors', 'public');
-            $data['photo'] = $photoPath;
+            $photoPath = $request->file('photo')->store('mentor', 'public');
+            $data['photo'] = basename($photoPath);
         }
-
         $mentor = Mentor::create($data);
-
+        $mentor->photo_url = $mentor->photo_url;
         return response()->json($mentor, 201);
     }
 
@@ -46,6 +49,7 @@ class MentorController extends Controller
     public function show($id)
     {
         $mentor = Mentor::findOrFail($id);
+        $mentor->photo_url = $mentor->photo_url;
         return response()->json($mentor);
     }
 
@@ -53,20 +57,24 @@ class MentorController extends Controller
     public function update(Request $request, $id)
     {
         $mentor = Mentor::findOrFail($id);
-
         $data = $request->validate([
             'name' => 'sometimes|string',
             'email' => 'sometimes|email|unique:mentors,email,' . $id,
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // 10MB = 10240 KB
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
         ]);
-
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('mentors', 'public');
-            $data['photo'] = $photoPath;
+            // Hapus foto lama jika ada
+            if ($mentor->photo) {
+                $oldPath = storage_path('app/public/mentor/' . basename($mentor->photo));
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+            $photoPath = $request->file('photo')->store('mentor', 'public');
+            $data['photo'] = basename($photoPath);
         }
-
         $mentor->update($data);
-
+        $mentor->photo_url = $mentor->photo_url;
         return response()->json($mentor);
     }
 

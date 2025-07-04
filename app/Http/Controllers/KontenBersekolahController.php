@@ -38,7 +38,9 @@ class KontenBersekolahController extends Controller
         $konten = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $konten->getCollection()->transform(function($item) {
             if ($item->gambar) {
-                $item->gambar = url('/assets/image/artikel/' . $item->gambar);
+                $item->gambar = url('/storage/artikel/' . $item->gambar);
+            } else {
+                $item->gambar = url('/storage/artikel/default.jpg');
             }
             return $item;
         });
@@ -68,7 +70,9 @@ class KontenBersekolahController extends Controller
             ->firstOrFail();
         // Tambahkan path gambar pada response (tanpa mengubah database)
         if ($konten->gambar) {
-            $konten->gambar = url('/assets/image/artikel/' . $konten->gambar);
+            $konten->gambar = url('/storage/artikel/' . $konten->gambar);
+        } else {
+            $konten->gambar = url('/storage/artikel/default.jpg');
         }
         return response()->json([
             'success' => true,
@@ -108,20 +112,20 @@ class KontenBersekolahController extends Controller
                 // Gunakan slug sebagai nama file dasar
                 $slug = Str::slug($request->slug ?? $request->judul_halaman);
                 $filename = $slug . '.' . $image->getClientOriginalExtension();
-                $destination = base_path('../bersekolah_website/public/assets/image/artikel');
-                
-                // Pastikan direktori ada
-                if (!file_exists($destination)) {
-                    mkdir($destination, 0755, true);
-                }
-                
-                $image->move($destination, $filename);
+                // Simpan ke storage/app/public/artikel
+                $path = $image->storeAs('artikel', $filename, 'public');
                 $data['gambar'] = $filename; // hanya nama file
             } else {
                 unset($data['gambar']);
             }
             $data['user_id'] = Auth::id() ?? 1;
             $konten = KontenBersekolah::create($data);
+            // Return gambar url
+            if ($konten->gambar) {
+                $konten->gambar = url('/storage/artikel/' . $konten->gambar);
+            } else {
+                $konten->gambar = url('/storage/artikel/default.jpg');
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Konten berhasil dibuat',
@@ -168,7 +172,7 @@ class KontenBersekolahController extends Controller
             if ($request->hasFile('gambar')) {
                 // Hapus gambar lama jika ada
                 if ($konten->gambar) {
-                    $oldPath = base_path('../bersekolah_website/public/assets/image/artikel/' . $konten->gambar);
+                    $oldPath = storage_path('app/public/artikel/' . $konten->gambar);
                     if (file_exists($oldPath)) {
                         @unlink($oldPath);
                     }
@@ -176,19 +180,17 @@ class KontenBersekolahController extends Controller
                 $image = $request->file('gambar');
                 $slug = Str::slug($request->slug ?? $request->judul_halaman);
                 $filename = $slug . '.' . $image->getClientOriginalExtension();
-                $destination = base_path('../bersekolah_website/public/assets/image/artikel');
-                
-                // Pastikan direktori ada
-                if (!file_exists($destination)) {
-                    mkdir($destination, 0755, true);
-                }
-                
-                $image->move($destination, $filename);
+                $path = $image->storeAs('artikel', $filename, 'public');
                 $data['gambar'] = $filename; // hanya nama file
             } else {
                 unset($data['gambar']); // jangan update kolom gambar jika tidak upload baru
             }
             $konten->update($data);
+            if ($konten->gambar) {
+                $konten->gambar = url('/storage/artikel/' . $konten->gambar);
+            } else {
+                $konten->gambar = url('/storage/artikel/default.jpg');
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Konten berhasil diperbarui',
@@ -249,7 +251,7 @@ class KontenBersekolahController extends Controller
             $konten = KontenBersekolah::findOrFail($id);
             // Delete associated image if exists (from artikel folder)
             if ($konten->gambar) {
-                $imagePath = base_path('../bersekolah_website/public/assets/image/artikel/' . $konten->gambar);
+                $imagePath = storage_path('app/public/artikel/' . $konten->gambar);
                 if (file_exists($imagePath)) {
                     @unlink($imagePath);
                 }
@@ -267,4 +269,52 @@ class KontenBersekolahController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get all konten/artikel (no pagination, for admin use)
+     */
+    public function all(Request $request)
+    {
+        $query = KontenBersekolah::query();
+
+        // Hanya tampilkan yang "published" jika bukan endpoint admin
+        if (!$request->is('api/admin*')) {
+            $query->where('status', 'published');
+        }
+
+        // Fitur pencarian
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('judul_halaman', 'like', "%{$search}%")
+                ->orWhere('slug', 'like', "%{$search}%")
+                ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter kategori
+        if ($request->has('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // Ambil semua data tanpa pagination
+        $konten = $query->orderBy('created_at', 'desc')->get();
+
+        // Modifikasi gambar menjadi URL lengkap
+        $konten->transform(function($item) {
+            if ($item->gambar) {
+                $item->gambar = url('/storage/artikel/' . $item->gambar);
+            } else {
+                $item->gambar = url('/storage/artikel/default.jpg');
+            }
+            return $item;
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Semua konten berhasil diambil',
+            'data' => $konten
+        ]);
+    }
+
 }

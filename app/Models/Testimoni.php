@@ -30,6 +30,6 @@ class Testimoni extends Model
         if ($this->foto_testimoni) {
             return asset('storage/testimoni/' . $this->foto_testimoni);
         }
-        return null;
+        return asset('storage/testimoni/default.jpg');
     }
 }

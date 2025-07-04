@@ -251,7 +251,7 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('role:admin,superadmin')->group(function () {
         // Document Management Admin
         Route::patch('/documents/{documentId}/status', [BesWanDocumentController::class, 'updateStatus']);
         Route::get('/admin/documents/{category?}', [BesWanDocumentController::class, 'getDocumentsByCategory']);
@@ -261,6 +261,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Route::apiResource('admin-testimonial', App\Http\Controllers\TestimonialController::class);
         Route::apiResource('admin-faq', App\Http\Controllers\FaqController::class)->except(['index', 'show']);
         Route::apiResource('admin-konten', App\Http\Controllers\KontenBersekolahController::class);
+        Route::get('/admin-konten/all', [App\Http\Controllers\KontenBersekolahController::class, 'all']);
+        Route::get('/admin-konten-all', [App\Http\Controllers\KontenBersekolahController::class, 'all']);
         Route::patch('/admin-konten/{id}/status', [App\Http\Controllers\KontenBersekolahController::class, 'updateStatus']);
         
         // Testimoni Management Admin
@@ -271,7 +273,7 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Announcement Management
         Route::apiResource('announcements', AnnouncementController::class);
-        Route::patch('/announcements/{id}/status', [AnnouncementController::class, 'updateStatus']);
+        Route::patch('/announcements/{id}/status    ', [AnnouncementController::class, 'updateStatus']);
         
         // Announcement Read Tracking
         Route::post('/announcements/{id}/mark-as-read', [AnnouncementController::class, 'markAsRead']);
@@ -333,7 +335,7 @@ Route::post('/form-kontak', [ContactController::class, 'sendEmail'])->name('form
 Route::post('/kirim-pesan', [ContactController::class, 'kirimPesan']);
 
 // Untuk kebutuhan export data
-Route::get('/export', [ExportDataController::class, 'export']);
+Route::get('/export', [ExportDataController::class, 'export'])->middleware(['auth:sanctum', 'role:admin,superadmin']);
 
 // Public routes
 Route::get('/user', function (Request $request) {
