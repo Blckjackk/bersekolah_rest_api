@@ -16,8 +16,10 @@ class Mentor extends Model
     // Accessor untuk foto mentor agar bisa menampilkan URL lengkap
     public function getPhotoUrlAttribute()
     {
-        if ($this->photo) {
-            return asset('storage/' . $this->photo);
+        $filename = $this->photo;
+        if ($filename) {
+            $filename = basename($filename);
+            return asset('storage/mentor/' . $filename);
         }
         return asset('storage/mentor/default.jpg');
     }
