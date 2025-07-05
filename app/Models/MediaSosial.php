@@ -12,8 +12,7 @@ class MediaSosial extends Model
     protected $table = 'media_sosial';
     
     protected $fillable = [
-        'twibbon_link',
-        'instagram_link',
+        'link_grup_beasiswa',
     ];
 
     protected $casts = [
