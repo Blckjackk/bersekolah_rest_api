@@ -39,6 +39,7 @@ Route::get('/', function () {
 
 // Media Sosial links (public access)
 Route::get('/media-sosial/latest', [App\Http\Controllers\MediaSosialController::class, 'getLatest']);
+Route::get('/media-sosial/public', [App\Http\Controllers\Api\Admin\MediaSosialController::class, 'public']);
 
 /*
 |--------------------------------------------------------------------------
@@ -402,6 +403,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Admin routes
 Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->prefix('admin')->group(function () {
+    
+    // Media Sosial management
+    Route::get('/media-sosial', [App\Http\Controllers\Api\Admin\MediaSosialController::class, 'index']);
+    Route::put('/media-sosial', [App\Http\Controllers\Api\Admin\MediaSosialController::class, 'update']);
     
     // Content management
     Route::apiResource('settings', App\Http\Controllers\SettingController::class);
