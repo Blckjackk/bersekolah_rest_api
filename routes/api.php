@@ -129,6 +129,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Get all beswan
     Route::get('/beswan', [App\Http\Controllers\BeswanController::class, 'index']);
     
+    // Get accepted beswan with search
+    Route::get('/beswan/accepted', [App\Http\Controllers\BeswanController::class, 'getAcceptedBeswan']);
+    
     // Get single beswan by ID
     Route::get('/beswan/{id}', [App\Http\Controllers\BeswanController::class, 'show']);
     
@@ -137,6 +140,9 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Delete beswan
     Route::delete('/beswan/{id}', [App\Http\Controllers\BeswanController::class, 'destroy']);
+    
+    // Reject beswan (change status to rejected)
+    Route::patch('/beswan/{id}/reject', [App\Http\Controllers\BeswanController::class, 'rejectBeswan']);
 
     Route::get('/beswan/count', [BeswanController::class, 'count']);
 
