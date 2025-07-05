@@ -121,14 +121,12 @@ class ExportDataController extends Controller
                                 'user',
                                 'alamatBeswan', 
                                 'keluargaBeswan',
-                                'dokumenBeswan',
-                                'periode'
+                                'documents'
                             ])->get();
                             
                             // Buat data yang lebih lengkap dan flat
                             $enrichedBeswans = $beswans->map(function($beswan) {
-                                $data = $beswan->toArray();
-                                
+                                $data = is_object($beswan) && method_exists($beswan, 'toArray') ? $beswan->toArray() : (array)$beswan;
                                 // Flatten alamat jika tersedia
                                 if (isset($data['alamat_beswan']) && !empty($data['alamat_beswan'])) {
                                     $alamat = $data['alamat_beswan'];
@@ -137,24 +135,20 @@ class ExportDataController extends Controller
                                     $data['provinsi'] = isset($alamat['provinsi']) ? $alamat['provinsi'] : null;
                                     $data['kode_pos'] = isset($alamat['kode_pos']) ? $alamat['kode_pos'] : null;
                                 }
-                                
                                 // Tambahkan data user jika tersedia
                                 if (isset($data['user']) && !empty($data['user'])) {
                                     $data['user_email'] = $data['user']['email'] ?? null;
                                     $data['user_status'] = $data['user']['status'] ?? null;
                                 }
-                                
                                 // Tambahkan data periode jika tersedia
                                 if (isset($data['periode']) && !empty($data['periode'])) {
                                     $data['periode_tahun'] = $data['periode']['tahun'] ?? null;
                                     $data['periode_nama'] = $data['periode']['nama'] ?? null;
                                 }
-                                
                                 // Hapus objek bersarang untuk flatten data
                                 unset($data['alamat_beswan']);
                                 unset($data['user']);
                                 unset($data['periode']);
-                                
                                 return $data;
                             });
                             
@@ -167,7 +161,7 @@ class ExportDataController extends Controller
                                 $query->whereBetween('created_at', [$dateFilter['start'], $dateFilter['end']]);
                             }
                             // Tambahkan informasi terkait
-                            $exportData[$table] = $query->with(['user', 'calonBeswan', 'periode'])->get();
+                            $exportData[$table] = $query->with(['user', 'beswan', 'beasiswaPeriod'])->get();
                             break;
 
                         case 'beasiswa_periods':
@@ -298,7 +292,8 @@ class ExportDataController extends Controller
                 if (!empty($data[$tableName])) {
                     // Add headers
                     if (count($data[$tableName]) > 0) {
-                        $rowData = $data[$tableName][0]->toArray();
+                        $firstRow = $data[$tableName][0];
+                        $rowData = is_object($firstRow) && method_exists($firstRow, 'toArray') ? $firstRow->toArray() : (array)$firstRow;
                         $headers = array_keys($rowData);
                         $sheet->fromArray([$headers], NULL, 'A1');
                         
@@ -315,7 +310,7 @@ class ExportDataController extends Controller
                         // Add data rows
                         $dataArray = [];
                         foreach ($data[$tableName] as $row) {
-                            $rowArray = $row->toArray();
+                            $rowArray = is_object($row) && method_exists($row, 'toArray') ? $row->toArray() : (array)$row;
                             // Convert object or array values to JSON string to prevent Excel issues
                             foreach ($rowArray as $key => $value) {
                                 if (is_array($value) || is_object($value)) {

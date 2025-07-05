@@ -61,8 +61,13 @@ class BeswanController extends Controller
     public function show($id)
     {
         try {
-            $beswan = Beswan::with(['keluarga', 'sekolah', 'alamat'])
+            $beswan = Beswan::with(['user', 'keluarga', 'sekolah', 'alamat'])
                 ->findOrFail($id);
+            
+            // Tambahkan data user ke response
+            $beswan->user_name = $beswan->user->name ?? null;
+            $beswan->user_email = $beswan->user->email ?? null;
+            $beswan->user_phone = $beswan->user->phone ?? null;
             
             return response()->json([
                 'status' => 'success',
@@ -82,28 +87,21 @@ class BeswanController extends Controller
     public function count(Request $request)
     {
         try {
-            $query = Beswan::query();
+            // Total pendaftar (semua beswan yang mendaftar)
+            $totalPendaftar = Beswan::whereHas('beasiswaApplications')->count();
 
-            // Filter by period_id jika ada
-            if ($request->has('period_id') && $request->period_id) {
-                $periodId = $request->period_id;
-                $query->whereHas('beasiswaApplications', function ($q) use ($periodId) {
-                    $q->where('beasiswa_period_id', $periodId);
-                });
-            }
-
-            $total = $query->count();
-
+            // Total dokumen
             $totalDokumen = Beswan::withCount('documents')->get()->sum('documents_count');
 
+            // Total beswan yang lolos (status accepted)
             $totalDiterima = Beswan::whereHas('beasiswaApplications', function ($q) {
-                $q->where('status', 'accepted');
+                $q->where('status', 'diterima');
             })->count();
 
             return response()->json([
                 'status' => 'success',
                 'data' => [
-                    'total_beswan' => $total,
+                    'total_beswan' => $totalPendaftar,
                     'total_documents' => $totalDokumen,
                     'total_diterima' => $totalDiterima,
                 ]
@@ -155,6 +153,94 @@ class BeswanController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Data beswan berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get accepted beswan with search functionality
+     */
+    public function getAcceptedBeswan(Request $request)
+    {
+        try {
+            $query = Beswan::join('users', 'beswan.user_id', '=', 'users.id')
+                ->join('beasiswa_applications', 'beswan.id', '=', 'beasiswa_applications.beswan_id')
+                ->where('beasiswa_applications.status', 'diterima')
+                ->select(
+                    'beswan.id',
+                    'beswan.nama_panggilan',
+                    'beswan.tempat_lahir',
+                    'beswan.tanggal_lahir',
+                    'beswan.jenis_kelamin',
+                    'beswan.agama',
+                    'users.name as user_name',
+                    'users.email',
+                    'users.phone',
+                    'beswan.created_at',
+                    'beasiswa_applications.status as application_status',
+                    'beasiswa_applications.submitted_at'
+                );
+
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('beswan.nama_panggilan', 'LIKE', "%{$search}%")
+                      ->orWhere('users.name', 'LIKE', "%{$search}%")
+                      ->orWhere('users.email', 'LIKE', "%{$search}%")
+                      ->orWhere('users.phone', 'LIKE', "%{$search}%");
+                });
+            }
+
+            // Filter by period if provided
+            if ($request->has('period_id') && $request->period_id) {
+                $query->where('beasiswa_applications.beasiswa_period_id', $request->period_id);
+            }
+
+            $beswans = $query->orderBy('beswan.created_at', 'desc')->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $beswans
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update beswan application status to rejected
+     */
+    public function rejectBeswan($id)
+    {
+        try {
+            $beswan = Beswan::findOrFail($id);
+            
+            // Update the latest beasiswa application status to rejected
+            $application = $beswan->beasiswaApplications()
+                ->latest()
+                ->first();
+                
+            if (!$application) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tidak ada aplikasi beasiswa ditemukan untuk beswan ini'
+                ], 404);
+            }
+
+            $application->update(['status' => 'ditolak']);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Status beswan berhasil diubah menjadi tidak lolos'
             ]);
         } catch (\Exception $e) {
             return response()->json([
