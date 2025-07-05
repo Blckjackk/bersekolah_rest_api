@@ -299,4 +299,40 @@ class AuthController extends Controller
             'message' => 'User deleted successfully'
         ]);
     }
+
+    /**
+     * Update current user profile
+     */
+    public function updateProfile(Request $request)
+    {
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User tidak ditemukan'
+                ], 404);
+            }
+
+            // Validate the request
+            $validatedData = $request->validate([
+                'name' => 'required|max:255',
+                'email' => 'required|email|unique:users,email,' . $user->id,
+                'phone' => 'sometimes|nullable|string',
+            ]);
+
+            // Update the user
+            $user->update($validatedData);
+
+            return response()->json([
+                'message' => 'Profile berhasil diperbarui',
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating profile: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat memperbarui profile',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

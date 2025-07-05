@@ -157,6 +157,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Authentication Routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::put('/admin/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/admin/change-password', [App\Http\Controllers\UserPasswordController::class, 'update']);
     
     // Password Management Routes
     Route::post('/password/update', [App\Http\Controllers\UserPasswordController::class, 'update']);
