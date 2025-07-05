@@ -46,7 +46,10 @@ class MediaSosialController extends Controller
     {
         try {
             $request->validate([
-                'link_grup_beasiswa' => 'nullable|url'
+                'twibbon_link' => 'nullable|url|max:2048',
+                'instagram_link' => 'nullable|url|max:2048',
+                'link_grup_beasiswa' => 'nullable|url|max:2048',
+                'whatsapp_number' => 'nullable|string|max:20',
             ]);
 
             $mediaSosial = MediaSosial::first();
@@ -56,7 +59,10 @@ class MediaSosialController extends Controller
             }
 
             $mediaSosial->fill($request->only([
-                'link_grup_beasiswa'
+                'twibbon_link',
+                'instagram_link',
+                'link_grup_beasiswa',
+                'whatsapp_number'
             ]));
             
             $mediaSosial->save();
