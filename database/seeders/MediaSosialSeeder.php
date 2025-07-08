@@ -20,7 +20,8 @@ class MediaSosialSeeder extends Seeder
         MediaSosial::create([
             'twibbon_link' => 'https://twb.nz/bersekolah2025',
             'instagram_link' => 'https://instagram.com/ber.sekolah',
-            'link_grup_beasiswa' => 'https://chat.whatsapp.com/DBWgEhlvkz3E0SqpdvIL1q'
+            'link_grup_beasiswa' => 'https://chat.whatsapp.com/DBWgEhlvkz3E0SqpdvIL1q',
+            'whatsapp_number' => '+6281234567890'
         ]);
     }
 }

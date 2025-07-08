@@ -64,21 +64,11 @@ class DocumentTypeSeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // Dokumen Pendukung - BARU
+            // Dokumen Pendukung - DIPERBAIKI
             [
                 'code' => 'achievement_certificate',
                 'name' => 'Sertifikat Prestasi',
                 'description' => 'Sertifikat lomba, kompetisi, atau prestasi akademik/non-akademik',
-                'category' => 'pendukung',
-                'is_required' => false,
-                'allowed_formats' => json_encode(['jpg', 'jpeg', 'png', 'pdf']),
-                'max_file_size' => 5242880, // 5MB
-                'is_active' => true,
-            ],
-            [
-                'code' => 'recommendation_letter',
-                'name' => 'Surat Rekomendasi',
-                'description' => 'Surat rekomendasi dari guru, dosen, atau atasan',
                 'category' => 'pendukung',
                 'is_required' => false,
                 'allowed_formats' => json_encode(['jpg', 'jpeg', 'png', 'pdf']),
@@ -95,26 +85,7 @@ class DocumentTypeSeeder extends Seeder
                 'max_file_size' => 5242880, // 5MB
                 'is_active' => true,
             ],
-            [
-                'code' => 'cv_resume',
-                'name' => 'CV/Resume',
-                'description' => 'Curriculum Vitae atau Resume',
-                'category' => 'pendukung',
-                'is_required' => false,
-                'allowed_formats' => json_encode(['pdf', 'doc', 'docx']),
-                'max_file_size' => 5242880, // 5MB
-                'is_active' => true,
-            ],
-            [
-                'code' => 'other_document',
-                'name' => 'Dokumen Lainnya',
-                'description' => 'Dokumen pendukung lainnya yang relevan',
-                'category' => 'pendukung',
-                'is_required' => false,
-                'allowed_formats' => json_encode(['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx']),
-                'max_file_size' => 5242880, // 5MB
-                'is_active' => true,
-            ],
+
         ];
 
         foreach ($documentTypes as $docType) {

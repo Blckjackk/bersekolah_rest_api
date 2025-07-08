@@ -34,6 +34,8 @@ class MediaSosialController extends Controller
         $request->validate([
             'twibbon_link' => 'nullable|url|max:2048',
             'instagram_link' => 'nullable|url|max:2048',
+            'link_grup_beasiswa' => 'nullable|url|max:2048',
+            'whatsapp_number' => 'nullable|string|max:20',
         ]);
 
         $mediaSosial = MediaSosial::create($request->all());
@@ -64,6 +66,8 @@ class MediaSosialController extends Controller
         $request->validate([
             'twibbon_link' => 'nullable|url|max:2048',
             'instagram_link' => 'nullable|url|max:2048',
+            'link_grup_beasiswa' => 'nullable|url|max:2048',
+            'whatsapp_number' => 'nullable|string|max:20',
         ]);
 
         $mediaSosial = MediaSosial::findOrFail($id);

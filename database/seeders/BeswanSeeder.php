@@ -21,26 +21,31 @@ class BeswanSeeder extends Seeder
             [
                 'name' => 'Ahmad Rizki Pratama',
                 'email' => 'ahmad.rizki@example.com',
+                'phone' => '081234567801',
                 'password' => bcrypt('password'),
             ],
             [
                 'name' => 'Siti Nurhaliza',
                 'email' => 'siti.nurhaliza@example.com',
+                'phone' => '081234567802',
                 'password' => bcrypt('password'),
             ],
             [
                 'name' => 'Budi Santoso',
                 'email' => 'budi.santoso@example.com',
+                'phone' => '081234567803',
                 'password' => bcrypt('password'),
             ],
             [
                 'name' => 'Maya Sari Dewi',
                 'email' => 'maya.sari@example.com',
+                'phone' => '081234567804',
                 'password' => bcrypt('password'),
             ],
             [
                 'name' => 'Eko Prasetyo',
                 'email' => 'eko.prasetyo@example.com',
+                'phone' => '081234567805',
                 'password' => bcrypt('password'),
             ],
         ];
@@ -50,67 +55,44 @@ class BeswanSeeder extends Seeder
             $createdUsers[] = User::create($userData);
         }
 
-        // Create sample schools
-        $schools = [
-            [
-                'nama_sekolah' => 'Universitas Indonesia',
-                'alamat_sekolah' => 'Depok, Jawa Barat',
-                'jenjang' => 'S1',
-                'jurusan' => 'Teknik Informatika',
-            ],
-            [
-                'nama_sekolah' => 'Institut Teknologi Bandung',
-                'alamat_sekolah' => 'Bandung, Jawa Barat',
-                'jenjang' => 'S1',
-                'jurusan' => 'Teknik Elektro',
-            ],
-            [
-                'nama_sekolah' => 'Universitas Gadjah Mada',
-                'alamat_sekolah' => 'Yogyakarta',
-                'jenjang' => 'S1',
-                'jurusan' => 'Ekonomi',
-            ],
-            [
-                'nama_sekolah' => 'Universitas Airlangga',
-                'alamat_sekolah' => 'Surabaya, Jawa Timur',
-                'jenjang' => 'S1',
-                'jurusan' => 'Kedokteran',
-            ],
-            [
-                'nama_sekolah' => 'Universitas Padjadjaran',
-                'alamat_sekolah' => 'Bandung, Jawa Barat',
-                'jenjang' => 'S1',
-                'jurusan' => 'Hukum',
-            ],
-        ];
-
-        $createdSchools = [];
-        foreach ($schools as $schoolData) {
-            $createdSchools[] = SekolahBeswan::create($schoolData);
-        }
-
         // Create sample beswan data
         for ($i = 0; $i < 5; $i++) {
             $user = $createdUsers[$i];
-            $school = $createdSchools[$i];
 
             // Create Beswan
             $beswan = Beswan::create([
                 'user_id' => $user->id,
                 'nama_panggilan' => explode(' ', $user->name)[0],
-                'tempat_lahir' => ['Jakarta', 'Bandung', 'Surabaya', 'Yogyakarta', 'Medan'][$i],
-                'tanggal_lahir' => now()->subYears(20 + $i)->format('Y-m-d'),
-                'jenis_kelamin' => $i % 2 == 0 ? 'L' : 'P',
-                'agama' => ['Islam', 'Kristen', 'Hindu', 'Buddha', 'Katolik'][$i],
+                'tempat_lahir' => ['Jakarta', 'Bandung', 'Surabaya', 'Yogyakarta', 'Semarang'][$i],
+                'tanggal_lahir' => fake()->date(),
+                'jenis_kelamin' => $i % 2 == 0 ? 'Laki-laki' : 'Perempuan',
+                'agama' => ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha'][$i],
             ]);
+
+            // Create SekolahBeswan
+            $sekolah = new SekolahBeswan([
+                'asal_sekolah' => ['Universitas Indonesia', 'Institut Teknologi Bandung', 'Universitas Gadjah Mada', 'Universitas Airlangga', 'Universitas Padjadjaran'][$i],
+                'daerah_sekolah' => ['Depok, Jawa Barat', 'Bandung, Jawa Barat', 'Yogyakarta', 'Surabaya, Jawa Timur', 'Bandung, Jawa Barat'][$i],
+                'tingkat_kelas' => 'S1',
+                'jurusan' => ['Teknik Informatika', 'Teknik Elektro', 'Ekonomi', 'Kedokteran', 'Hukum'][$i],
+            ]);
+            $sekolah->beswan_id = $beswan->id;
+            $sekolah->save();
 
             // Create Address
             AlamatBeswan::create([
                 'beswan_id' => $beswan->id,
-                'alamat_lengkap' => 'Jl. Contoh No. ' . ($i + 1) . ', Jakarta',
-                'kota' => 'Jakarta',
+                'alamat_lengkap' => 'Jl. Contoh No. ' . ($i + 1),
+                'rt' => '001',
+                'rw' => '002',
+                'kelurahan_desa' => ['Menteng', 'Setiabudi', 'Kuningan', 'Senayan', 'Sudirman'][$i],
+                'kecamatan' => ['Menteng', 'Setiabudi', 'Kuningan', 'Kebayoran', 'Tanah Abang'][$i],
+                'kota_kabupaten' => ['Jakarta Pusat', 'Jakarta Selatan', 'Jakarta Timur', 'Jakarta Barat', 'Jakarta Utara'][$i],
                 'provinsi' => 'DKI Jakarta',
-                'kode_pos' => '12345',
+                'kode_pos' => '1234' . $i,
+                'nomor_telepon' => '08123456' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'kontak_darurat' => '08765432' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'email' => $user->email
             ]);
 
             // Create Family
@@ -120,12 +102,11 @@ class BeswanSeeder extends Seeder
                 'nama_ibu' => 'Ibu ' . $user->name,
                 'pekerjaan_ayah' => ['PNS', 'Wiraswasta', 'Petani', 'Buruh', 'Guru'][$i],
                 'pekerjaan_ibu' => ['Ibu Rumah Tangga', 'PNS', 'Wiraswasta', 'Guru', 'Perawat'][$i],
-                'penghasilan_orangtua' => [2000000, 3000000, 1500000, 2500000, 3500000][$i],
+                'penghasilan_ayah' => ['3000000', '4000000', '2500000', '3500000', '4500000'][$i],
+                'penghasilan_ibu' => ['0', '3000000', '2000000', '3000000', '3500000'][$i],
+                'jumlah_saudara_kandung' => (string)random_int(0, 4),
+                'jumlah_tanggungan' => (string)random_int(1, 5)
             ]);
-
-            // Associate with school
-            $beswan->sekolah()->associate($school);
-            $beswan->save();
         }
     }
 }
