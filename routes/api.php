@@ -518,3 +518,5 @@ Route::options('/debug/announcements', function() {
     ]);
 });
 
+Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->get('/admin/testimoni', [App\Http\Controllers\TestimoniController::class, 'index']);
+
