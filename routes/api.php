@@ -410,11 +410,6 @@ Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->prefix('admin')->g
     Route::get('/media-sosial', [App\Http\Controllers\Api\Admin\MediaSosialController::class, 'index']);
     Route::put('/media-sosial', [App\Http\Controllers\Api\Admin\MediaSosialController::class, 'update']);
     
-    // Scholarship Acceptance management for users
-    Route::get('/scholarship-acceptance/status', [App\Http\Controllers\Api\Peserta\ScholarshipAcceptanceController::class, 'getStatus']);
-    Route::post('/scholarship-acceptance/accept', [App\Http\Controllers\Api\Peserta\ScholarshipAcceptanceController::class, 'acceptScholarship']);
-    Route::post('/scholarship-acceptance/join-whatsapp', [App\Http\Controllers\Api\Peserta\ScholarshipAcceptanceController::class, 'joinWhatsAppGroup']);
-    
     // Content management
     Route::apiResource('settings', App\Http\Controllers\SettingController::class);
     Route::apiResource('faqs', App\Http\Controllers\FAQController::class);  
