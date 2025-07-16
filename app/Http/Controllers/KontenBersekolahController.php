@@ -32,13 +32,7 @@ class KontenBersekolahController extends Controller
         }
         // Add category filter
         if ($request->has('category')) {
-            if ($request->category === 'Kegiatan') {
-                $query->where('category', '!=', 'news');
-            } else if ($request->category === 'Berita') {
-                $query->where('category', 'news');
-            } else {
-                $query->where('category', $request->category);
-            }
+            $query->where('category', $request->category);
         }
         $perPage = $request->get('per_page', 6);
         $konten = $query->orderBy('created_at', 'desc')->paginate($perPage);
@@ -300,13 +294,7 @@ class KontenBersekolahController extends Controller
 
         // Filter kategori
         if ($request->has('category')) {
-            if ($request->category === 'Kegiatan') {
-                $query->whereRaw('LOWER(category) != ?', ['news']);
-            } else if ($request->category === 'Berita') {
-                $query->whereRaw('LOWER(category) = ?', ['news']);
-            } else {
-                $query->where('category', $request->category);
-            }
+            $query->where('category', $request->category);
         }
 
         // Ambil semua data tanpa pagination
