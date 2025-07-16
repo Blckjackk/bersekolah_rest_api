@@ -22,6 +22,7 @@ use App\Http\Controllers\ExportDataController;
 use App\Http\Controllers\BeasiswaCountdownController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ExportController;
+use Illuminate\Support\Facades\Log;
 
 
 /*
@@ -514,4 +515,35 @@ Route::options('/debug/announcements', function() {
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->get('/admin/testimoni', [App\Http\Controllers\TestimoniController::class, 'index']);
+
+// Test endpoint untuk debug export
+Route::get('/test-export', function(Request $request) {
+    try {
+        Log::info('Test export endpoint called');
+        
+        // Test basic database connection
+        $applications = \App\Models\BeasiswaApplication::with('beswan.user')->get();
+        Log::info('Found applications', ['count' => $applications->count()]);
+        
+        // Test document retrieval
+        $documents = \App\Models\BeswanDocument::all();
+        Log::info('Found documents', ['count' => $documents->count()]);
+        
+        return response()->json([
+            'status' => 'success',
+            'applications_count' => $applications->count(),
+            'documents_count' => $documents->count(),
+            'storage_path' => storage_path('app/public'),
+            'storage_exists' => file_exists(storage_path('app/public'))
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Test export error', ['error' => $e->getMessage()]);
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+})->middleware(['auth:sanctum', 'role:admin,superadmin']);
 
