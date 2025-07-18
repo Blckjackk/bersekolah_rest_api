@@ -16,6 +16,7 @@ class MediaSosial extends Model
         'instagram_link',
         'link_grup_beasiswa',
         'whatsapp_number',
+        'judul_essay',
     ];
 
     protected $casts = [

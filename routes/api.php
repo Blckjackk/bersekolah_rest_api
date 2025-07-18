@@ -168,10 +168,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/password', [App\Http\Controllers\UserPasswordController::class, 'update']);
     Route::post('/profile/password', [App\Http\Controllers\UserPasswordController::class, 'update']);
     
-    // Reset Password Routes (No Authentication Required)
-    Route::post('/password/email', [App\Http\Controllers\ForgotPasswordController::class, 'sendResetLinkEmail'])->withoutMiddleware(['auth', 'auth:sanctum']);
-    Route::post('/password/reset', [App\Http\Controllers\ForgotPasswordController::class, 'reset'])->withoutMiddleware(['auth', 'auth:sanctum']);
-    
     // User Data Routes
     Route::post('/calon-beswan/pribadi', [App\Http\Controllers\CalonBeswanController::class, 'postPribadi']);
     Route::get('/calon-beswan/pribadi', [App\Http\Controllers\CalonBeswanController::class, 'getPribadi']);

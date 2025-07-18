@@ -50,6 +50,7 @@ class MediaSosialController extends Controller
                 'instagram_link' => 'nullable|url|max:2048',
                 'link_grup_beasiswa' => 'nullable|url|max:2048',
                 'whatsapp_number' => 'nullable|string|max:20',
+                'judul_essay' => 'nullable|string|max:255',
             ]);
 
             $mediaSosial = MediaSosial::first();
@@ -62,7 +63,8 @@ class MediaSosialController extends Controller
                 'twibbon_link',
                 'instagram_link',
                 'link_grup_beasiswa',
-                'whatsapp_number'
+                'whatsapp_number',
+                'judul_essay'
             ]));
             
             $mediaSosial->save();

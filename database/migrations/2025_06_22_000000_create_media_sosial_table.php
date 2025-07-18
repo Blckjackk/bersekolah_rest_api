@@ -19,6 +19,7 @@ class CreateMediaSosialTable extends Migration
             $table->text('instagram_link')->nullable();
             $table->text('link_grup_beasiswa')->nullable();
             $table->string('whatsapp_number')->nullable();
+            $table->string('judul_essay')->nullable();
             $table->timestamps();
         });
     }

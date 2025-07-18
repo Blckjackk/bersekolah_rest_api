@@ -68,10 +68,10 @@ class DocumentTypeSeeder extends Seeder
             [
                 'code' => 'achievement_certificate',
                 'name' => 'Sertifikat Prestasi',
-                'description' => 'Sertifikat lomba, kompetisi, atau prestasi akademik/non-akademik',
+                'description' => 'Sertifikat lomba, kompetisi, atau prestasi akademik/non-akademik. Jika memiliki beberapa sertifikat, harap digabungkan menjadi satu file PDF.',
                 'category' => 'pendukung',
                 'is_required' => false,
-                'allowed_formats' => json_encode(['jpg', 'jpeg', 'png', 'pdf']),
+                'allowed_formats' => json_encode(['pdf']),
                 'max_file_size' => 5242880, // 5MB
                 'is_active' => true,
             ],
