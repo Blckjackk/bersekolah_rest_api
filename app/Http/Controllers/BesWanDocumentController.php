@@ -284,7 +284,7 @@ class BesWanDocumentController extends Controller
             
             Log::info("Getting ALL documents for user ID: {$user->id}");
             
-            // Get beswan data from user
+            // Get beswan data for user
             $beswan = Beswan::where('user_id', $user->id)->first();
             
             // Jika belum ada data beswan, return empty
@@ -404,7 +404,7 @@ class BesWanDocumentController extends Controller
             $user = Auth::user();
             Log::info("User ID: {$user->id}");
             
-            // Get beswan data from user
+            // Get beswan data for user
             $beswan = Beswan::where('user_id', $user->id)->first();
             
             // Pastikan user memiliki data beswan terlebih dahulu
@@ -426,6 +426,7 @@ class BesWanDocumentController extends Controller
             Log::info("Beswan ID: {$beswanId}");
             
             // Check if document type exists
+            Log::info("Looking for document type with code: {$documentCode}");
             $documentType = DocumentType::where('code', $documentCode)
                 ->where('is_active', true)
                 ->first();
@@ -437,10 +438,20 @@ class BesWanDocumentController extends Controller
                 $allTypes = DocumentType::all(['code', 'name', 'is_active']);
                 Log::info("Available document types: " . json_encode($allTypes));
                 
+                // Try to find similar document types (for debugging purposes)
+                $similar = DocumentType::where('code', 'like', "%{$documentCode}%")
+                    ->orWhere('name', 'like', "%{$documentCode}%")
+                    ->get(['code', 'name', 'is_active']);
+                Log::info("Similar document types: " . json_encode($similar));
+                
                 return response()->json([
-                    'message' => 'Tipe dokumen tidak ditemukan',
+                    'message' => 'Tipe dokumen tidak ditemukan: ' . $documentCode,
                     'code' => $documentCode,
-                    'available_types' => $allTypes
+                    'available_types' => $allTypes,
+                    'debug_info' => config('app.debug') ? [
+                        'submitted_code' => $documentCode,
+                        'similar_types' => $similar ?? []
+                    ] : null
                 ], 404);
             }
 
@@ -502,41 +513,12 @@ class BesWanDocumentController extends Controller
 
             Log::info("File uploaded successfully: {$path}");
 
-            // Check if document type supports multiple uploads
-            $supportsMultiple = in_array($documentType->code, ['sertifikat_prestasi', 'prestasi']);
-            Log::info("Document type supports multiple: " . ($supportsMultiple ? 'Yes' : 'No'));
-
-            DB::beginTransaction();
-            
-            try {
-                if ($supportsMultiple) {
-                    // For multiple upload types, always create new record
-                    Log::info("Creating new document record for multiple upload type");
-                    
-                    $createData = [
-                        'beswan_id' => $beswanId,
-                        'document_type_id' => $documentType->id,
-                        'file_path' => $path,
-                        'file_name' => $file->getClientOriginalName(),
-                        'file_type' => $file->getClientOriginalExtension(),
-                        'file_size' => $file->getSize(),
-                        'status' => 'pending',
-                        'keterangan' => $request->keterangan,
-                    ];
-                    
-                    Log::info("Create data: " . json_encode($createData));
-                    
-                    $document = BeswanDocument::create($createData);
-                    
-                    Log::info("Document created successfully. ID: {$document->id}");
-                    
-                } else {
-                    // For single upload types, check if document already exists
-                    $existingDoc = BeswanDocument::where('beswan_id', $beswanId)
-                        ->where('document_type_id', $documentType->id)
-                        ->first();
-
-                    Log::info("Existing document check: " . ($existingDoc ? "Found ID {$existingDoc->id}" : "Not found"));
+            // For all document types, check if already exists
+            $existingDoc = BeswanDocument::where('beswan_id', $beswanId)
+                ->where('document_type_id', $documentType->id)
+                ->first();
+                
+            Log::info("Existing document check: " . ($existingDoc ? "Found ID {$existingDoc->id}" : "Not found"));
 
                     if ($existingDoc) {
                         Log::info("Updating existing document ID: {$existingDoc->id}");
@@ -608,7 +590,7 @@ class BesWanDocumentController extends Controller
             $responseData = [
                 'id' => $document->id,
                 'document_type' => $documentType->code,
-                'file_path' => asset('storage/' . $path),
+                'file_path' => asset(Storage::url($path)),
                 'file_name' => $file->getClientOriginalName(),
                 'status' => 'pending',
                 'created_at' => $document->updated_at->toISOString(),
@@ -822,7 +804,7 @@ class BesWanDocumentController extends Controller
                     'user_id' => $userData['id'], // User ID yang sebenarnya
                     'beswan_id' => $doc->beswan_id, // Untuk debugging
                     'document_type' => $doc->documentType ? $doc->documentType->code : 'unknown',
-                    'file_path' => asset('storage/' . $doc->file_path),
+                    'file_path' => asset(Storage::url($doc->file_path)),
                     'file_name' => $doc->file_name,
                     'status' => $doc->status,
                     'keterangan' => $doc->keterangan,
