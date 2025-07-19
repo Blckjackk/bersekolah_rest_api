@@ -280,15 +280,15 @@ class BesWanDocumentController extends Controller
     public function getDokumenWajib(Request $request)
     {
         try {
-            $user = auth()->user();
+            $user = Auth::user();
             
             Log::info("Getting ALL documents for user ID: {$user->id}");
             
-            // Load relasi beswan dari user
-            $user->load('beswan');
+            // Get beswan data from user
+            $beswan = Beswan::where('user_id', $user->id)->first();
             
             // Jika belum ada data beswan, return empty
-            if (!$user->beswan) {
+            if (!$beswan) {
                 Log::info("No beswan data found for user: {$user->id}");
                 return response()->json([
                     'message' => 'Data beswan belum ada, silakan lengkapi data pribadi terlebih dahulu',
@@ -297,12 +297,12 @@ class BesWanDocumentController extends Controller
             }
 
             // ✅ FIXED: Get ALL user's uploaded documents (tanpa filter category)
-            $uploadedDocs = BeswanDocument::where('beswan_id', $user->beswan->id)
+            $uploadedDocs = BeswanDocument::where('beswan_id', $beswan->id)
                 ->with(['documentType', 'verifiedBy'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            Log::info("Found " . $uploadedDocs->count() . " uploaded documents for beswan ID: {$user->beswan->id}");
+            Log::info("Found " . $uploadedDocs->count() . " uploaded documents for beswan ID: {$beswan->id}");
 
             // ✅ FIXED: Format response data dengan informasi lengkap
             $documents = $uploadedDocs->map(function($doc) {
@@ -401,14 +401,14 @@ class BesWanDocumentController extends Controller
             Log::info("=== UPLOAD DOCUMENT START ===");
             Log::info("Document code: {$documentCode}");
             
-            $user = auth()->user();
+            $user = Auth::user();
             Log::info("User ID: {$user->id}");
             
-            // Load relasi beswan dari user
-            $user->load('beswan');
+            // Get beswan data from user
+            $beswan = Beswan::where('user_id', $user->id)->first();
             
             // Pastikan user memiliki data beswan terlebih dahulu
-            if (!$user->beswan) {
+            if (!$beswan) {
                 Log::info("No beswan data, creating default beswan for user: {$user->id}");
                 
                 // Create default beswan record jika belum ada
@@ -420,12 +420,9 @@ class BesWanDocumentController extends Controller
                     'jenis_kelamin' => 'Laki-laki',
                     'agama' => 'Islam',
                 ]);
-                
-                // Reload user dengan beswan baru
-                $user->load('beswan');
             }
 
-            $beswanId = $user->beswan->id;
+            $beswanId = $beswan->id;
             Log::info("Beswan ID: {$beswanId}");
             
             // Check if document type exists
@@ -505,46 +502,16 @@ class BesWanDocumentController extends Controller
 
             Log::info("File uploaded successfully: {$path}");
 
-            // Check if document already exists
-            $existingDoc = BeswanDocument::where('beswan_id', $beswanId)
-                ->where('document_type_id', $documentType->id)
-                ->first();
-
-            Log::info("Existing document check: " . ($existingDoc ? "Found ID {$existingDoc->id}" : "Not found"));
+            // Check if document type supports multiple uploads
+            $supportsMultiple = in_array($documentType->code, ['sertifikat_prestasi', 'prestasi']);
+            Log::info("Document type supports multiple: " . ($supportsMultiple ? 'Yes' : 'No'));
 
             DB::beginTransaction();
             
             try {
-                if ($existingDoc) {
-                    Log::info("Updating existing document ID: {$existingDoc->id}");
-                    
-                    // Delete old file
-                    if ($existingDoc->file_path && Storage::disk('public')->exists($existingDoc->file_path)) {
-                        Storage::disk('public')->delete($existingDoc->file_path);
-                        Log::info("Old file deleted: {$existingDoc->file_path}");
-                    }
-                    
-                    // Update existing record
-                    $updateData = [
-                        'file_path' => $path,
-                        'file_name' => $file->getClientOriginalName(),
-                        'file_type' => $file->getClientOriginalExtension(),
-                        'file_size' => $file->getSize(),
-                        'status' => 'pending',
-                        'keterangan' => $request->keterangan,
-                        'verified_at' => null,
-                        'verified_by' => null,
-                    ];
-                    
-                    Log::info("Update data: " . json_encode($updateData));
-                    
-                    $existingDoc->update($updateData);
-                    $document = $existingDoc->fresh();
-                    
-                    Log::info("Document updated successfully. New data: " . json_encode($document->toArray()));
-                    
-                } else {
-                    Log::info("Creating new document record");
+                if ($supportsMultiple) {
+                    // For multiple upload types, always create new record
+                    Log::info("Creating new document record for multiple upload type");
                     
                     $createData = [
                         'beswan_id' => $beswanId,
@@ -561,7 +528,64 @@ class BesWanDocumentController extends Controller
                     
                     $document = BeswanDocument::create($createData);
                     
-                    Log::info("Document created successfully. ID: {$document->id}, Data: " . json_encode($document->toArray()));
+                    Log::info("Document created successfully. ID: {$document->id}");
+                    
+                } else {
+                    // For single upload types, check if document already exists
+                    $existingDoc = BeswanDocument::where('beswan_id', $beswanId)
+                        ->where('document_type_id', $documentType->id)
+                        ->first();
+
+                    Log::info("Existing document check: " . ($existingDoc ? "Found ID {$existingDoc->id}" : "Not found"));
+
+                    if ($existingDoc) {
+                        Log::info("Updating existing document ID: {$existingDoc->id}");
+                        
+                        // Delete old file
+                        if ($existingDoc->file_path && Storage::disk('public')->exists($existingDoc->file_path)) {
+                            Storage::disk('public')->delete($existingDoc->file_path);
+                            Log::info("Old file deleted: {$existingDoc->file_path}");
+                        }
+                        
+                        // Update existing record
+                        $updateData = [
+                            'file_path' => $path,
+                            'file_name' => $file->getClientOriginalName(),
+                            'file_type' => $file->getClientOriginalExtension(),
+                            'file_size' => $file->getSize(),
+                            'status' => 'pending',
+                            'keterangan' => $request->keterangan,
+                            'verified_at' => null,
+                            'verified_by' => null,
+                        ];
+                        
+                        Log::info("Update data: " . json_encode($updateData));
+                        
+                        $existingDoc->update($updateData);
+                        $document = $existingDoc->fresh();
+                        
+                        Log::info("Document updated successfully. New data: " . json_encode($document->toArray()));
+                        
+                    } else {
+                        Log::info("Creating new document record");
+                        
+                        $createData = [
+                            'beswan_id' => $beswanId,
+                            'document_type_id' => $documentType->id,
+                            'file_path' => $path,
+                            'file_name' => $file->getClientOriginalName(),
+                            'file_type' => $file->getClientOriginalExtension(),
+                            'file_size' => $file->getSize(),
+                            'status' => 'pending',
+                            'keterangan' => $request->keterangan,
+                        ];
+                        
+                        Log::info("Create data: " . json_encode($createData));
+                        
+                        $document = BeswanDocument::create($createData);
+                        
+                        Log::info("Document created successfully. ID: {$document->id}");
+                    }
                 }
                 
                 DB::commit();
@@ -584,7 +608,7 @@ class BesWanDocumentController extends Controller
             $responseData = [
                 'id' => $document->id,
                 'document_type' => $documentType->code,
-                'file_path' => Storage::disk('public')->url($path),
+                'file_path' => asset('storage/' . $path),
                 'file_name' => $file->getClientOriginalName(),
                 'status' => 'pending',
                 'created_at' => $document->updated_at->toISOString(),
@@ -655,10 +679,10 @@ class BesWanDocumentController extends Controller
     public function deleteDocument($documentId)
     {
         try {
-            $user = auth()->user();
-            $user->load('beswan');
+            $user = Auth::user();
+            $beswan = Beswan::where('user_id', $user->id)->first();
 
-            if (!$user->beswan) {
+            if (!$beswan) {
                 return response()->json([
                     'message' => 'Data beswan tidak ditemukan'
                 ], 404);
@@ -666,7 +690,7 @@ class BesWanDocumentController extends Controller
 
             // Find document dan pastikan milik user ini
             $document = BeswanDocument::where('id', $documentId)
-                ->where('beswan_id', $user->beswan->id)
+                ->where('beswan_id', $beswan->id)
                 ->first();
 
             if (!$document) {
@@ -798,7 +822,7 @@ class BesWanDocumentController extends Controller
                     'user_id' => $userData['id'], // User ID yang sebenarnya
                     'beswan_id' => $doc->beswan_id, // Untuk debugging
                     'document_type' => $doc->documentType ? $doc->documentType->code : 'unknown',
-                    'file_path' => Storage::disk('public')->url($doc->file_path),
+                    'file_path' => asset('storage/' . $doc->file_path),
                     'file_name' => $doc->file_name,
                     'status' => $doc->status,
                     'keterangan' => $doc->keterangan,
