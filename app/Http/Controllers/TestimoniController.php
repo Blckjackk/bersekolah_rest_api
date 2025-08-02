@@ -69,7 +69,7 @@ class TestimoniController extends Controller
             if ($request->hasFile('foto_testimoni')) {
                 $file = $request->file('foto_testimoni');
                 $filename = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('testimoni', $filename, 'public');
+                $file->storeAs('admin/testimoni', $filename, 'public');
                 $validatedData['foto_testimoni'] = $filename;
             }
 
@@ -128,11 +128,11 @@ class TestimoniController extends Controller
             ]);
             if ($request->hasFile('foto_testimoni')) {
                 if ($testimoni->foto_testimoni) {
-                    Storage::disk('public')->delete('testimoni/' . $testimoni->foto_testimoni);
+                    Storage::disk('public')->delete('admin/testimoni/' . $testimoni->foto_testimoni);
                 }
                 $file = $request->file('foto_testimoni');
                 $filename = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('testimoni', $filename, 'public');
+                $file->storeAs('admin/testimoni', $filename, 'public');
                 $validatedData['foto_testimoni'] = $filename;
             }
             $testimoni->update($validatedData);

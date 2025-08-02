@@ -30,8 +30,8 @@ class KontenBersekolah extends Model
     public function getGambarUrlAttribute()
     {
         if ($this->gambar) {
-            return asset('storage/artikel/' . $this->gambar);
+            return asset('storage/admin/artikel/' . $this->gambar);
         }
-        return asset('storage/artikel/default.jpg');
+        return asset('storage/defaults/artikel-default.jpg');
     }
 }

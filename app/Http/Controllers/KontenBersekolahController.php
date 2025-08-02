@@ -38,9 +38,9 @@ class KontenBersekolahController extends Controller
         $konten = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $konten->getCollection()->transform(function($item) {
             if ($item->gambar) {
-                $item->gambar = url('/storage/artikel/' . $item->gambar);
+                $item->gambar = url('/storage/admin/artikel/' . $item->gambar);
             } else {
-                $item->gambar = url('/storage/artikel/default.jpg');
+                $item->gambar = url('/storage/defaults/artikel-default.jpg');
             }
             return $item;
         });
@@ -70,9 +70,9 @@ class KontenBersekolahController extends Controller
             ->firstOrFail();
         // Tambahkan path gambar pada response (tanpa mengubah database)
         if ($konten->gambar) {
-            $konten->gambar = url('/storage/artikel/' . $konten->gambar);
+            $konten->gambar = url('/storage/admin/artikel/' . $konten->gambar);
         } else {
-            $konten->gambar = url('/storage/artikel/default.jpg');
+            $konten->gambar = url('/storage/defaults/artikel-default.jpg');
         }
         return response()->json([
             'success' => true,
@@ -112,8 +112,8 @@ class KontenBersekolahController extends Controller
                 // Gunakan slug sebagai nama file dasar
                 $slug = Str::slug($request->slug ?? $request->judul_halaman);
                 $filename = $slug . '.' . $image->getClientOriginalExtension();
-                // Simpan ke storage/app/public/artikel
-                $path = $image->storeAs('artikel', $filename, 'public');
+                // Simpan ke storage/app/public/admin/artikel
+                $path = $image->storeAs('admin/artikel', $filename, 'public');
                 $data['gambar'] = $filename; // hanya nama file
             } else {
                 unset($data['gambar']);
@@ -122,9 +122,9 @@ class KontenBersekolahController extends Controller
             $konten = KontenBersekolah::create($data);
             // Return gambar url
             if ($konten->gambar) {
-                $konten->gambar = url('/storage/artikel/' . $konten->gambar);
+                $konten->gambar = url('/storage/admin/artikel/' . $konten->gambar);
             } else {
-                $konten->gambar = url('/storage/artikel/default.jpg');
+                $konten->gambar = url('/storage/defaults/artikel-default.jpg');
             }
             return response()->json([
                 'success' => true,
@@ -172,7 +172,7 @@ class KontenBersekolahController extends Controller
             if ($request->hasFile('gambar')) {
                 // Hapus gambar lama jika ada
                 if ($konten->gambar) {
-                    $oldPath = storage_path('app/public/artikel/' . $konten->gambar);
+                    $oldPath = storage_path('app/public/admin/artikel/' . $konten->gambar);
                     if (file_exists($oldPath)) {
                         @unlink($oldPath);
                     }
@@ -180,16 +180,16 @@ class KontenBersekolahController extends Controller
                 $image = $request->file('gambar');
                 $slug = Str::slug($request->slug ?? $request->judul_halaman);
                 $filename = $slug . '.' . $image->getClientOriginalExtension();
-                $path = $image->storeAs('artikel', $filename, 'public');
+                $path = $image->storeAs('admin/artikel', $filename, 'public');
                 $data['gambar'] = $filename; // hanya nama file
             } else {
                 unset($data['gambar']); // jangan update kolom gambar jika tidak upload baru
             }
             $konten->update($data);
             if ($konten->gambar) {
-                $konten->gambar = url('/storage/artikel/' . $konten->gambar);
+                $konten->gambar = url('/storage/admin/artikel/' . $konten->gambar);
             } else {
-                $konten->gambar = url('/storage/artikel/default.jpg');
+                $konten->gambar = url('/storage/defaults/artikel-default.jpg');
             }
             return response()->json([
                 'success' => true,

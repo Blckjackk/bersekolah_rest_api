@@ -37,7 +37,7 @@ class MentorController extends Controller
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // max 10MB
         ]);
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('mentor', 'public');
+            $photoPath = $request->file('photo')->store('admin/mentor', 'public');
             $data['photo'] = basename($photoPath);
         }
         $mentor = Mentor::create($data);
@@ -65,12 +65,12 @@ class MentorController extends Controller
         if ($request->hasFile('photo')) {
             // Hapus foto lama jika ada
             if ($mentor->photo) {
-                $oldPath = storage_path('app/public/mentor/' . basename($mentor->photo));
+                $oldPath = storage_path('app/public/admin/mentor/' . basename($mentor->photo));
                 if (file_exists($oldPath)) {
                     @unlink($oldPath);
                 }
             }
-            $photoPath = $request->file('photo')->store('mentor', 'public');
+            $photoPath = $request->file('photo')->store('admin/mentor', 'public');
             $data['photo'] = basename($photoPath);
         }
         $mentor->update($data);

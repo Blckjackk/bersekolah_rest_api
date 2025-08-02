@@ -19,8 +19,8 @@ class Mentor extends Model
         $filename = $this->photo;
         if ($filename) {
             $filename = basename($filename);
-            return asset('storage/mentor/' . $filename);
+            return asset('storage/admin/mentor/' . $filename);
         }
-        return asset('storage/mentor/default.jpg');
+        return asset('storage/defaults/mentor-default.jpg');
     }
 }
