@@ -28,8 +28,8 @@ class Testimoni extends Model
     public function getFotoTestimoniUrlAttribute()
     {
         if ($this->foto_testimoni) {
-            return asset('storage/testimoni/' . $this->foto_testimoni);
+            return asset('storage/admin/testimoni/' . $this->foto_testimoni);
         }
-        return asset('storage/testimoni/default.jpg');
+        return asset('storage/defaults/testimoni-default.jpg');
     }
 }

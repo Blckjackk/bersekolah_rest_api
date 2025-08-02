@@ -92,10 +92,23 @@ class BesWanDocumentController extends Controller
                 ], 400);
             }
 
+            // Map document types to folder paths
+            $folderMap = [
+                'student_proof' => 'beswan/student_proof',
+                'identity_proof' => 'beswan/identity_proof', 
+                'photo' => 'beswan/photo',
+                'instagram_follow' => 'beswan/instagram_follow',
+                'twibbon_post' => 'beswan/twibbon_post',
+                'achievement_certificate' => 'beswan/achievement_certificate',
+                'essay_motivation' => 'beswan/essay_motivation'
+            ];
+
+            $folderPath = $folderMap[$documentType->code] ?? 'beswan/documents';
+
             // Upload file
             $file = $request->file('file');
             $filename = time() . '_' . $beswan->id . '_' . $documentType->code . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('documents', $filename, 'public');
+            $path = $file->storeAs($folderPath, $filename, 'public');
 
             // Delete existing document if any
             if ($existingDoc) {
@@ -178,10 +191,23 @@ class BesWanDocumentController extends Controller
                 Storage::disk('public')->delete($document->file_path);
             }
 
+            // Map document types to folder paths
+            $folderMap = [
+                'student_proof' => 'beswan/student_proof',
+                'identity_proof' => 'beswan/identity_proof', 
+                'photo' => 'beswan/photo',
+                'instagram_follow' => 'beswan/instagram_follow',
+                'twibbon_post' => 'beswan/twibbon_post',
+                'achievement_certificate' => 'beswan/achievement_certificate',
+                'essay_motivation' => 'beswan/essay_motivation'
+            ];
+
+            $folderPath = $folderMap[$document->documentType->code] ?? 'beswan/documents';
+
             // Upload new file
             $file = $request->file('file');
             $filename = time() . '_' . $beswan->id . '_' . $document->documentType->code . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('documents', $filename, 'public');
+            $path = $file->storeAs($folderPath, $filename, 'public');
 
             // Update document
             $document->update([
