@@ -513,61 +513,64 @@ class BesWanDocumentController extends Controller
 
             Log::info("File uploaded successfully: {$path}");
 
-            // For all document types, check if already exists
-            $existingDoc = BeswanDocument::where('beswan_id', $beswanId)
-                ->where('document_type_id', $documentType->id)
-                ->first();
-                
-            Log::info("Existing document check: " . ($existingDoc ? "Found ID {$existingDoc->id}" : "Not found"));
+            // Database transaction for document save
+            DB::beginTransaction();
+            
+            try {
+                // For all document types, check if already exists
+                $existingDoc = BeswanDocument::where('beswan_id', $beswanId)
+                    ->where('document_type_id', $documentType->id)
+                    ->first();
+                    
+                Log::info("Existing document check: " . ($existingDoc ? "Found ID {$existingDoc->id}" : "Not found"));
 
-                    if ($existingDoc) {
-                        Log::info("Updating existing document ID: {$existingDoc->id}");
-                        
-                        // Delete old file
-                        if ($existingDoc->file_path && Storage::disk('public')->exists($existingDoc->file_path)) {
-                            Storage::disk('public')->delete($existingDoc->file_path);
-                            Log::info("Old file deleted: {$existingDoc->file_path}");
-                        }
-                        
-                        // Update existing record
-                        $updateData = [
-                            'file_path' => $path,
-                            'file_name' => $file->getClientOriginalName(),
-                            'file_type' => $file->getClientOriginalExtension(),
-                            'file_size' => $file->getSize(),
-                            'status' => 'pending',
-                            'keterangan' => $request->keterangan,
-                            'verified_at' => null,
-                            'verified_by' => null,
-                        ];
-                        
-                        Log::info("Update data: " . json_encode($updateData));
-                        
-                        $existingDoc->update($updateData);
-                        $document = $existingDoc->fresh();
-                        
-                        Log::info("Document updated successfully. New data: " . json_encode($document->toArray()));
-                        
-                    } else {
-                        Log::info("Creating new document record");
-                        
-                        $createData = [
-                            'beswan_id' => $beswanId,
-                            'document_type_id' => $documentType->id,
-                            'file_path' => $path,
-                            'file_name' => $file->getClientOriginalName(),
-                            'file_type' => $file->getClientOriginalExtension(),
-                            'file_size' => $file->getSize(),
-                            'status' => 'pending',
-                            'keterangan' => $request->keterangan,
-                        ];
-                        
-                        Log::info("Create data: " . json_encode($createData));
-                        
-                        $document = BeswanDocument::create($createData);
-                        
-                        Log::info("Document created successfully. ID: {$document->id}");
+                if ($existingDoc) {
+                    Log::info("Updating existing document ID: {$existingDoc->id}");
+                    
+                    // Delete old file
+                    if ($existingDoc->file_path && Storage::disk('public')->exists($existingDoc->file_path)) {
+                        Storage::disk('public')->delete($existingDoc->file_path);
+                        Log::info("Old file deleted: {$existingDoc->file_path}");
                     }
+                    
+                    // Update existing record
+                    $updateData = [
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_type' => $file->getClientOriginalExtension(),
+                        'file_size' => $file->getSize(),
+                        'status' => 'pending',
+                        'keterangan' => $request->keterangan,
+                        'verified_at' => null,
+                        'verified_by' => null,
+                    ];
+                    
+                    Log::info("Update data: " . json_encode($updateData));
+                    
+                    $existingDoc->update($updateData);
+                    $document = $existingDoc->fresh();
+                    
+                    Log::info("Document updated successfully. New data: " . json_encode($document->toArray()));
+                    
+                } else {
+                    Log::info("Creating new document record");
+                    
+                    $createData = [
+                        'beswan_id' => $beswanId,
+                        'document_type_id' => $documentType->id,
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_type' => $file->getClientOriginalExtension(),
+                        'file_size' => $file->getSize(),
+                        'status' => 'pending',
+                        'keterangan' => $request->keterangan,
+                    ];
+                    
+                    Log::info("Create data: " . json_encode($createData));
+                    
+                    $document = BeswanDocument::create($createData);
+                    
+                    Log::info("Document created successfully. ID: {$document->id}");
                 }
                 
                 DB::commit();

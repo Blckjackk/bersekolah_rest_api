@@ -99,6 +99,9 @@ Route::options('/announcements/{id}', function() {
 // Public Periods Route - No authentication needed
 Route::get('/public/beasiswa-periods', [BeasiswaPeriodsController::class, 'getPublicPeriods'])->withoutMiddleware(['auth', 'auth:sanctum']);
 
+// Public Document Types - No authentication needed for frontend to fetch available document types
+Route::get('/document-types', [BesWanDocumentController::class, 'getDocumentTypes'])->withoutMiddleware(['auth', 'auth:sanctum']);
+
 Route::options('/public/beasiswa-periods', function() {
     return response()->json([], 200, [
         'Access-Control-Allow-Origin' => '*',
@@ -185,9 +188,6 @@ Route::middleware('auth:sanctum')->group(function () {
     | Document Management Routes - SCHEMA BARU (BesWanDocumentController)
     |--------------------------------------------------------------------------
     */
-    
-    // Document Types Master Data
-    Route::get('/document-types', [BesWanDocumentController::class, 'getDocumentTypes']);
     
     // Get User's Uploaded Documents
     Route::get('/my-documents', [BesWanDocumentController::class, 'getDokumenWajib']);
