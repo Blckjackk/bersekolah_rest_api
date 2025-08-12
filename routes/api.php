@@ -4,6 +4,12 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FaqController;
+
+// Include debug routes for storage testing
+require __DIR__ . '/debug-storage.php';
+
+// Include quick setup routes for production
+require __DIR__ . '/quick-setup.php';
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BeswanController;
 use App\Http\Controllers\TestimoniController;

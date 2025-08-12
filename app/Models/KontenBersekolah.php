@@ -29,7 +29,8 @@ class KontenBersekolah extends Model
     // Accessor untuk gambar artikel agar bisa menampilkan URL lengkap
     public function getGambarUrlAttribute()
     {
-        $baseUrl = config('app.env') === 'production'
+        // Check environment and force production URL for Railway
+        $baseUrl = env('APP_ENV') === 'production' || str_contains(env('APP_URL', ''), 'railway')
             ? 'https://web-production-0cc6.up.railway.app'
             : 'http://localhost:8000';
 
