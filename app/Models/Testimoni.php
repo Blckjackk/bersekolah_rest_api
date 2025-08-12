@@ -27,9 +27,28 @@ class Testimoni extends Model
     // Accessor untuk foto testimoni agar bisa menampilkan URL lengkap
     public function getFotoTestimoniUrlAttribute()
     {
-        if ($this->foto_testimoni) {
-            return asset('storage/admin/testimoni/' . $this->foto_testimoni);
+        if (!$this->foto_testimoni) {
+            return asset('storage/defaults/testimoni-default.jpg');
         }
-        return asset('storage/defaults/testimoni-default.jpg');
+        
+        $filename = $this->foto_testimoni;
+        
+        // Jika sudah full path, gunakan langsung
+        if (str_starts_with($filename, 'http')) {
+            return $filename;
+        }
+        
+        // Jika sudah ada /storage/ di awal, buat full URL
+        if (str_starts_with($filename, '/storage/')) {
+            return url($filename);
+        }
+        
+        // Extract filename saja jika ada path
+        if (str_contains($filename, '/')) {
+            $filename = basename($filename);
+        }
+        
+        // Return full Laravel storage URL untuk admin/testimoni folder
+        return asset('storage/admin/testimoni/' . $filename);
     }
 }

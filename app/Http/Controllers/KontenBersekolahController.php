@@ -37,11 +37,7 @@ class KontenBersekolahController extends Controller
         $perPage = $request->get('per_page', 6);
         $konten = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $konten->getCollection()->transform(function($item) {
-            if ($item->gambar) {
-                $item->gambar = url('/storage/admin/artikel/' . $item->gambar);
-            } else {
-                $item->gambar = url('/storage/defaults/artikel-default.jpg');
-            }
+            $item->gambar = $item->gambar_url; // Use the accessor
             return $item;
         });
         return response()->json([
@@ -69,11 +65,7 @@ class KontenBersekolahController extends Controller
             ->where('status', 'published')
             ->firstOrFail();
         // Tambahkan path gambar pada response (tanpa mengubah database)
-        if ($konten->gambar) {
-            $konten->gambar = url('/storage/admin/artikel/' . $konten->gambar);
-        } else {
-            $konten->gambar = url('/storage/defaults/artikel-default.jpg');
-        }
+        $konten->gambar = $konten->gambar_url; // Use the accessor
         return response()->json([
             'success' => true,
             'message' => 'Konten berhasil diambil',
@@ -121,11 +113,7 @@ class KontenBersekolahController extends Controller
             $data['user_id'] = Auth::id() ?? 1;
             $konten = KontenBersekolah::create($data);
             // Return gambar url
-            if ($konten->gambar) {
-                $konten->gambar = url('/storage/admin/artikel/' . $konten->gambar);
-            } else {
-                $konten->gambar = url('/storage/defaults/artikel-default.jpg');
-            }
+            $konten->gambar = $konten->gambar_url; // Use the accessor
             return response()->json([
                 'success' => true,
                 'message' => 'Konten berhasil dibuat',
@@ -186,11 +174,7 @@ class KontenBersekolahController extends Controller
                 unset($data['gambar']); // jangan update kolom gambar jika tidak upload baru
             }
             $konten->update($data);
-            if ($konten->gambar) {
-                $konten->gambar = url('/storage/admin/artikel/' . $konten->gambar);
-            } else {
-                $konten->gambar = url('/storage/defaults/artikel-default.jpg');
-            }
+            $konten->gambar = $konten->gambar_url; // Use the accessor
             return response()->json([
                 'success' => true,
                 'message' => 'Konten berhasil diperbarui',
@@ -302,11 +286,7 @@ class KontenBersekolahController extends Controller
 
         // Modifikasi gambar menjadi URL lengkap
         $konten->transform(function($item) {
-            if ($item->gambar) {
-                $item->gambar = url('/storage/artikel/' . $item->gambar);
-            } else {
-                $item->gambar = url('/storage/artikel/default.jpg');
-            }
+            $item->gambar = $item->gambar_url; // Use the accessor
             return $item;
         });
 

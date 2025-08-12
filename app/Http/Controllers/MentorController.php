@@ -13,10 +13,12 @@ class MentorController extends Controller
     {
         $mentors = Mentor::all();
         $mentors->transform(function($mentor) {
+            // Ensure photo_url is generated
             $mentor->photo_url = $mentor->photo_url;
             return $mentor;
         });
         return response()->json([
+            'success' => true,
             'data' => $mentors,
             'total' => Mentor::count()
         ]);
@@ -52,7 +54,8 @@ class MentorController extends Controller
             }
 
             $mentor = Mentor::create($data);
-            $mentor->photo_url = $mentor->photo_url;
+            $mentor->load([]); // Refresh model to get accessors
+            $mentor->photo_url = $mentor->photo_url; // Trigger accessor
 
             return response()->json([
                 'success' => true,
@@ -89,8 +92,11 @@ class MentorController extends Controller
     public function show($id)
     {
         $mentor = Mentor::findOrFail($id);
-        $mentor->photo_url = $mentor->photo_url;
-        return response()->json($mentor);
+        $mentor->photo_url = $mentor->photo_url; // Trigger accessor
+        return response()->json([
+            'success' => true,
+            'data' => $mentor
+        ]);
     }
 
     // Update mentor
@@ -126,7 +132,8 @@ class MentorController extends Controller
             }
 
             $mentor->update($data);
-            $mentor->photo_url = $mentor->photo_url;
+            $mentor->refresh(); // Refresh to get updated accessors
+            $mentor->photo_url = $mentor->photo_url; // Trigger accessor
 
             return response()->json([
                 'success' => true,
