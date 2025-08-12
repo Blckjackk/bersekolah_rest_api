@@ -7,18 +7,16 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'auth/*'],
-    
-    'allowed_origins' => ['*'], // Allow all origins to connect to the API
-    
+    'paths' => ['api/*', 'storage/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
-    
+    'allowed_origins' => [
+        'https://bersekolah-astro.vercel.app',
+        'https://*.vercel.app', // untuk preview branch
+        'http://localhost:4321', // jika develop lokal
+    ],
+    'allowed_origins_patterns' => [
+        '#^https://bersekolah-astro-.*\.vercel\.app$#', // preview branch
+    ],
     'allowed_headers' => ['*'],
-    
-    'exposed_headers' => [],
-    
-    'max_age' => 0,
-    
-    // Set to false since these are public routes that don't need cookies/credentials
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 ];

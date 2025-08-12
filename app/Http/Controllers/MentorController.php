@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Mentor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MentorController extends Controller
 {
@@ -31,18 +32,57 @@ class MentorController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email|unique:mentors,email',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // max 10MB
-        ]);
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('admin/mentor', 'public');
-            $data['photo'] = basename($photoPath);
+        try {
+            // Log request data untuk debugging
+            Log::info('Mentor store request:', [
+                'all_data' => $request->all(),
+                'has_file' => $request->hasFile('photo'),
+                'files' => $request->allFiles()
+            ]);
+
+            $data = $request->validate([
+                'name' => 'required|string',
+                'email' => 'required|email|unique:mentors,email',
+                'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // max 10MB
+            ]);
+
+            if ($request->hasFile('photo')) {
+                $photoPath = $request->file('photo')->store('admin/mentor', 'public');
+                $data['photo'] = basename($photoPath);
+            }
+
+            $mentor = Mentor::create($data);
+            $mentor->photo_url = $mentor->photo_url;
+
+            return response()->json([
+                'success' => true,
+                'data' => $mentor,
+                'message' => 'Mentor berhasil ditambahkan'
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Mentor validation error:', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Mentor store error:', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan mentor: ' . $e->getMessage()
+            ], 500);
         }
-        $mentor = Mentor::create($data);
-        $mentor->photo_url = $mentor->photo_url;
-        return response()->json($mentor, 201);
     }
 
     // Show mentor by id
@@ -56,26 +96,69 @@ class MentorController extends Controller
     // Update mentor
     public function update(Request $request, $id)
     {
-        $mentor = Mentor::findOrFail($id);
-        $data = $request->validate([
-            'name' => 'sometimes|string',
-            'email' => 'sometimes|email|unique:mentors,email,' . $id,
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
-        ]);
-        if ($request->hasFile('photo')) {
-            // Hapus foto lama jika ada
-            if ($mentor->photo) {
-                $oldPath = storage_path('app/public/admin/mentor/' . basename($mentor->photo));
-                if (file_exists($oldPath)) {
-                    @unlink($oldPath);
+        try {
+            $mentor = Mentor::findOrFail($id);
+
+            // Log request data untuk debugging
+            Log::info('Mentor update request:', [
+                'id' => $id,
+                'all_data' => $request->all(),
+                'has_file' => $request->hasFile('photo'),
+                'files' => $request->allFiles()
+            ]);
+
+            $data = $request->validate([
+                'name' => 'sometimes|string',
+                'email' => 'sometimes|email|unique:mentors,email,' . $id,
+                'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+            ]);
+
+            if ($request->hasFile('photo')) {
+                // Hapus foto lama jika ada
+                if ($mentor->photo) {
+                    $oldPath = storage_path('app/public/admin/mentor/' . basename($mentor->photo));
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
                 }
+                $photoPath = $request->file('photo')->store('admin/mentor', 'public');
+                $data['photo'] = basename($photoPath);
             }
-            $photoPath = $request->file('photo')->store('admin/mentor', 'public');
-            $data['photo'] = basename($photoPath);
+
+            $mentor->update($data);
+            $mentor->photo_url = $mentor->photo_url;
+
+            return response()->json([
+                'success' => true,
+                'data' => $mentor,
+                'message' => 'Mentor berhasil diperbarui'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Mentor update validation error:', [
+                'id' => $id,
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Mentor update error:', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui mentor: ' . $e->getMessage()
+            ], 500);
         }
-        $mentor->update($data);
-        $mentor->photo_url = $mentor->photo_url;
-        return response()->json($mentor);
     }
 
 
