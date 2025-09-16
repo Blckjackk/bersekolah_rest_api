@@ -16,9 +16,9 @@ class Mentor extends Model
     // Accessor untuk foto mentor agar bisa menampilkan URL lengkap
     public function getPhotoUrlAttribute()
     {
-        // Check environment and force production URL for Railway
-        $baseUrl = env('APP_ENV') === 'production' || str_contains(env('APP_URL', ''), 'railway')
-            ? 'https://web-production-0cc6.up.railway.app'
+        // Check environment and force production URL for Hostinger
+        $baseUrl = env('APP_ENV') === 'production' || str_contains(env('APP_URL', ''), 'hostingersite')
+            ? 'https://sandybrown-capybara-903436.hostingersite.com'
             : 'http://localhost:8000';
 
         // If no image path provided, return default
