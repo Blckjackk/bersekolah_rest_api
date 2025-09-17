@@ -31,16 +31,9 @@ class BeswanController extends Controller
     public function index(Request $request)
     {
         try {
-            // Simple query joining beswan with users
-            $beswans = Beswan::join('users', 'beswan.user_id', '=', 'users.id')
-                ->select(
-                    'beswan.id',
-                    'users.name as nama',
-                    'users.email',
-                    'users.phone',
-                    'beswan.created_at'
-                )
-                ->orderBy('beswan.created_at', 'desc')
+            // Query with relationships untuk mendapatkan data lengkap
+            $beswans = Beswan::with(['user', 'keluarga', 'sekolah', 'alamat'])
+                ->orderBy('created_at', 'desc')
                 ->get();
             
             return response()->json([
