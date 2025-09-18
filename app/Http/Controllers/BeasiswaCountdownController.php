@@ -11,12 +11,14 @@ class BeasiswaCountdownController extends Controller
     public function countdown(){
         $periode = DB::table('beasiswa_periods')
             ->where('is_active', 1)
+            ->where('status', 'active')
             ->orderBy('akhir_pendaftaran', 'desc')
             ->first();
 
         if(!$periode) {
             return response()->json([
-                'message' => 'Tidak ada periode beasiswa yang aktif saat ini.'
+                'message' => 'Tidak ada periode beasiswa yang aktif saat ini.',
+                'status' => 'error'
             ], 404);
         }
 
@@ -31,7 +33,8 @@ class BeasiswaCountdownController extends Controller
                 'hours' => 0,
                 'minutes' => 0,
                 'seconds' => 0,
-                'message' => 'Pendaftaran sudah ditutup.'
+                'message' => 'Pendaftaran sudah ditutup.',
+                'status' => 'expired'
             ]);
         }
 
